@@ -51,10 +51,12 @@ func getToken(tokenURL, clientID, clientSecret, code string) (string, error) {
 	params.Set("resource", clientID)
 	body := bytes.NewBufferString(params.Encode())
 	cli := new(http.Client)
+	log.Println("Posting to token url", tokenURL, params.Encode())
 	resp, err := cli.Post(tokenURL, "application/x-www-form-urlencoded", body)
 	if err != nil {
 		return "", err
 	}
+	log.Println("Got token", resp.Body)
 	decoder := json.NewDecoder(resp.Body)
 	var dat map[string]interface{}
 	err = decoder.Decode(&dat)
@@ -70,10 +72,10 @@ func main() {
 	flag.Parse()
 
 	if len(*redirectCallback) > 0 {
-		// fmt.Print(*redirectCallback)
+		log.Println("Got redirect", *redirectCallback)
 		u, err := url.Parse(*redirectCallback)
 		if err != nil {
-			log.Println("Error parsing url", err, *redirectCallback)
+			log.Println("Error parsing url", err, "args", os.Args)
 			time.Sleep(time.Second * 3)
 			return
 		}
