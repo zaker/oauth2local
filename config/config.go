@@ -12,6 +12,14 @@ type Config struct {
 	ClientID     string
 	ClientSecret string
 	TenantID     string
+	AppRedirect  string
+	HandleScheme string
+}
+
+const handleURLScheme = "loc-auth"
+
+func redirectURL() string {
+	return handleURLScheme + "://callback"
 }
 
 // Load config for app
@@ -20,7 +28,7 @@ func Load() (*Config, error) {
 	if err != nil {
 		return nil, err
 	}
-	c := &Config{}
+	c := &Config{HandleScheme: handleURLScheme, AppRedirect: redirectURL()}
 	tenant := os.Getenv("AAD_TENANT_ID")
 	if len(tenant) == 0 {
 		return nil, fmt.Errorf("No tenant id => AAD_TENANT_ID")

@@ -1,73 +1,19 @@
 package maicn
 import (
-	"bytes"
-	"encoding/json"
 	"flag"
 	"fmt"
 	"log"
-	"net/http"
-	"net/url"
 	"os"
 	"time"
+
+	"github.com/zaker/oauth2local/oauth2"
 
 	"github.com/zaker/oauth2local/config"
 
 	"github.com/zaker/oauth2local/register"
-
-	"github.com/pkg/browser"
 )
 
-const handleURLScheme = "loc-auth"
-
 var redirectCallback = flag.String("r", "", "Handles redirect from azure ad")
-
-func redirectURL() string {
-	return handleURLScheme + "://callback"
-}
-
-func authorizeURL(tenant, clientID, state string) string {
-	params := url.Values{}
-
-	params.Set("redirect_uri", redirectURL())
-	params.Set("client_id", clientID)
-	params.Set("response_type", "code")
-	params.Set("state", state)
-	return fmt.Sprintf("https://login.microsoftonline.com/%s/oauth2/authorize?%s", tenant, params.Encode())
-}
-
-func tokenURL(tenant string) string {
-
-	return fmt.Sprintf("https://login.microsoftonline.com/%s/oauth2/token", tenant)
-}
-
-func getToken(tokenURL, clientID, clientSecret, code string) (string, error) {
-
-	params := url.Values{}
-
-	params.Set("redirect_uri", redirectURL())
-	params.Set("client_id", clientID)
-	params.Set("client_secret", clientSecret)
-	params.Set("grant_type", "authorization_code")
-	params.Set("code", code)
-	params.Set("resource", clientID)
-	body := bytes.NewBufferString(params.Encode())
-	cli := new(http.Client)
-	log.Println("Posting to token url", tokenURL, params.Encode())
-	resp, err := cli.Post(tokenURL, "application/x-www-form-urlencoded", body)
-	if err != nil {
-		return "", err
-	}
-	log.Println("Got token", resp.Body)
-	decoder := json.NewDecoder(resp.Body)
-	var dat map[string]interface{}
-	err = decoder.Decode(&dat)
-	if err != nil {
-		return "", err
-	}
-
-	accessToken := dat["access_token"].(string)
-	return accessToken, nil
-}
 
 func main() {
 	flag.Parse()
@@ -75,27 +21,21 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	if len(*redirectCallback) > 0 {
-		log.Println("Got redirect", *redirectCallback)
-		u, err := url.Parse(*redirectCallback)
-		if err != nil {
-			log.Println("Error parsing url", err, "args", os.Args)
-			time.Sleep(time.Second * 3)
-			return
-		}
 
-		if u.Scheme != handleURLScheme {
-			log.Println("We dont handle", u.Scheme)
+	cli, err := oauth2.NewClient(cfg)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if len(*redirectCallback) > 0 {
+		log.Println("Handle redirect", *redirectCallback)
+		code, err := cli.CodeFromCallback(*redirectCallback)
+		if err != nil {
+			log.Println("Couldn't retreive code from url", err)
 			time.Sleep(time.Second * 3)
 			return
 		}
-		params := u.Query()
-		code := params.Get("code")
-		accessToken, err := getToken(
-			tokenURL(cfg.TenantID),
-			cfg.ClientID,
-			cfg.ClientSecret,
-			code)
+		accessToken, err := cli.GetToken(code)
 		if err != nil {
 			log.Println("Error parsing url", err)
 			time.Sleep(time.Second * 3)
@@ -110,6 +50,6 @@ func main() {
 		log.Fatal("Error loading .env file", err)
 	}
 
-	register.RegMe(handleURLScheme, os.Args[0])
-	browser.OpenURL(authorizeURL(cfg.TenantID, cfg.ClientID, "none"))
+	register.RegMe(cfg.HandleScheme, os.Args[0])
+	cli.OpenLoginProvider()
 }
