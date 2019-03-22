@@ -1,4 +1,4 @@
-package main
+package maicn
 import (
 	"bytes"
 	"encoding/json"
@@ -10,9 +10,10 @@ import (
 	"os"
 	"time"
 
+	"github.com/zaker/oauth2local/config"
+
 	"github.com/zaker/oauth2local/register"
 
-	"github.com/joho/godotenv"
 	"github.com/pkg/browser"
 )
 
@@ -70,7 +71,10 @@ func getToken(tokenURL, clientID, clientSecret, code string) (string, error) {
 
 func main() {
 	flag.Parse()
-
+	cfg, err := config.Load()
+	if err != nil {
+		log.Fatal(err)
+	}
 	if len(*redirectCallback) > 0 {
 		log.Println("Got redirect", *redirectCallback)
 		u, err := url.Parse(*redirectCallback)
@@ -88,9 +92,9 @@ func main() {
 		params := u.Query()
 		code := params.Get("code")
 		accessToken, err := getToken(
-			tokenURL(os.Getenv("AAD_TENANT_ID")),
-			os.Getenv("AAD_CLIENT_ID"),
-			os.Getenv("AAD_CLIENT_SECRET"),
+			tokenURL(cfg.TenantID),
+			cfg.ClientID,
+			cfg.ClientSecret,
 			code)
 		if err != nil {
 			log.Println("Error parsing url", err)
@@ -101,11 +105,11 @@ func main() {
 		time.Sleep(time.Second * 3)
 		return
 	}
-	err := godotenv.Load()
+
 	if err != nil && !os.IsNotExist(err) {
 		log.Fatal("Error loading .env file", err)
 	}
 
 	register.RegMe(handleURLScheme, os.Args[0])
-	browser.OpenURL(authorizeURL(os.Getenv("AAD_TENANT_ID"), os.Getenv("AAD_CLIENT_ID"), "none"))
+	browser.OpenURL(authorizeURL(cfg.TenantID, cfg.ClientID, "none"))
 }
