@@ -24,7 +24,7 @@ func redirectURL() string {
 
 // Load config for app
 func Load() (*Config, error) {
-	err := godotenv.Load()
+	err := godotenv.Load("C:\\bin\\.env")
 	if err != nil {
 		return nil, err
 	}

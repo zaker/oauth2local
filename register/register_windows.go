@@ -54,11 +54,6 @@ func RegMe(urlScheme, locauthPath string) error {
 		return err
 	}
 
-	err = k.SetStringValue("URL Protocol", "")
-	if err != nil {
-		return err
-	}
-
 	log.Println("Creating key", urlScheme+`\shell`)
 	sk, _, err := registry.CreateKey(registry.CLASSES_ROOT, urlScheme+`\shell`, registry.WRITE)
 	if err != nil {

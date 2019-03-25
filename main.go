@@ -1,5 +1,6 @@
-package maicn
+package main
 import (
+	"bufio"
 	"flag"
 	"fmt"
 	"log"
@@ -17,13 +18,20 @@ var redirectCallback = flag.String("r", "", "Handles redirect from azure ad")
 
 func main() {
 	flag.Parse()
+
 	cfg, err := config.Load()
 	if err != nil {
+		log.Println("Couldn't load config", err)
+		fmt.Print("Press 'Enter' to continue...")
+		bufio.NewReader(os.Stdin).ReadBytes('\n')
 		log.Fatal(err)
 	}
 
 	cli, err := oauth2.NewClient(cfg)
 	if err != nil {
+		log.Println("Couldn't start client", err)
+		fmt.Print("Press 'Enter' to continue...")
+		bufio.NewReader(os.Stdin).ReadBytes('\n')
 		log.Fatal(err)
 	}
 
@@ -32,17 +40,22 @@ func main() {
 		code, err := cli.CodeFromCallback(*redirectCallback)
 		if err != nil {
 			log.Println("Couldn't retreive code from url", err)
-			time.Sleep(time.Second * 3)
+			fmt.Print("Press 'Enter' to continue...")
+			bufio.NewReader(os.Stdin).ReadBytes('\n')
 			return
 		}
 		accessToken, err := cli.GetToken(code)
 		if err != nil {
 			log.Println("Error parsing url", err)
-			time.Sleep(time.Second * 3)
+			fmt.Print("Press 'Enter' to continue...")
+			bufio.NewReader(os.Stdin).ReadBytes('\n')
 			return
 		}
-		fmt.Println(accessToken)
-		time.Sleep(time.Second * 3)
+		fmt.Println("Access Token", accessToken)
+		time.Sleep(time.Second * 10)
+		fmt.Print("Press 'Enter' to continue...")
+		bufio.NewReader(os.Stdin).ReadBytes('\n')
+
 		return
 	}
 
