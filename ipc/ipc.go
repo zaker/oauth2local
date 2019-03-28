@@ -1,5 +1,4 @@
 package ipc
-
 import (
 	"context"
 	"fmt"
@@ -7,33 +6,44 @@ import (
 	"time"
 
 	pb "github.com/zaker/oauth2local/ipc/localauth"
+	"github.com/zaker/oauth2local/oauth2"
+	"github.com/zaker/oauth2local/storage"
 	"google.golang.org/grpc"
 )
 
-type server struct{}
-type client struct{}
-
-func (s *server) GetAccessToken(ctx context.Context, _ *pb.Empty) (*pb.ATResponse, error) {
-
-	return nil, nil
+type Server struct {
+	oauthCli oauth2.Client
+	store    storage.Storage
 }
 
-func (s *server) UpdateCode(ctx context.Context, cr *pb.UCRequest) (*pb.Empty, error) {
+type client struct{}
+
+func NewServer(cli oauth2.Client) (s *Server) {
+	s = new(Server)
+	s.oauthCli = cli
+	return
+}
+
+func (s *Server) GetAccessToken(ctx context.Context, _ *pb.Empty) (*pb.ATResponse, error) {
+	r := new(pb.ATResponse)
+	c, err := s.store.GetCode()
+	a, err := s.oauthCli.GetToken(c)
+	r.AccessToken = a
+	return r, err
+}
+
+func (s *Server) UpdateCode(ctx context.Context, cr *pb.UCRequest) (*pb.Empty, error) {
 	r := new(pb.Empty)
 	fmt.Println("Received:", cr.Code)
 	return r, nil
 
 }
 
-func (s *server) Ping(ctx context.Context, _ *pb.Empty) (*pb.PingResponse, error) {
+func (s *Server) Ping(ctx context.Context, _ *pb.Empty) (*pb.PingResponse, error) {
 	r := new(pb.PingResponse)
 	r.Message = "pong"
 	return r, nil
 }
-
-// func localPipe(ctx context.Context,addr string)(c net.Conn, err error){
-
-// }
 
 func HasSovereign() (bool, error) {
 	conn, err := grpc.Dial("pipe", grpc.WithInsecure(), grpc.WithContextDialer(localPipeDial))
@@ -68,14 +78,14 @@ func SendCode(code string) error {
 	return nil
 }
 
-func StartServer() {
+func (s *Server) Run() {
 	lis, err := listener()
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
-	s := grpc.NewServer()
-	pb.RegisterLocalAuthServer(s, &server{})
-	if err := s.Serve(lis); err != nil {
+	gs := grpc.NewServer()
+	pb.RegisterLocalAuthServer(gs, s)
+	if err := gs.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)
 	}
 }

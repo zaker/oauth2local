@@ -14,57 +14,53 @@ import (
 
 var redirectCallback = flag.String("r", "", "Handles redirect from azure ad")
 
+func client(cfg *config.Config) error {
+
+	switch cfg.ClientType() {
+	case config.Redirect:
+		err := ipc.SendCode(cfg.RedirectURL)
+		if err != nil {
+
+			return err
+		}
+		fmt.Print("Press 'Enter' to continue...")
+		bufio.NewReader(os.Stdin).ReadBytes('\n')
+	}
+	return nil
+}
+
 func main() {
-	flag.Parse()
-	var cfg *config.Config
+
 	isClient, err := ipc.HasSovereign()
-	isRedirect := len(*redirectCallback) > 0
+
 	if err != nil {
 		log.Println("Sovereign check failed", err)
 
 	}
+	flag.Parse()
 
-	if !isClient {
-
-		cfg, err = config.Load()
+	cfg := config.Init(isClient)
+	cfg.RedirectURL = *redirectCallback
+	if isClient {
+		err = client(cfg)
 		if err != nil {
-			log.Println("Couldn't load config", err)
-			fmt.Print("Press 'Enter' to continue...")
+
+			fmt.Println("Error...", err)
 			bufio.NewReader(os.Stdin).ReadBytes('\n')
-			log.Fatal(err)
 		}
-		// cli, _ := oauth2.NewClient(cfg)
-		// cli.OpenLoginProvider()
-		go ipc.StartServer()
-		return
-
-	} else {
-		fmt.Printf("Press 'Enter' to continue redirect %v", isRedirect)
-		bufio.NewReader(os.Stdin).ReadBytes('\n')
-		if isRedirect {
-			code, err := oauth2.CodeFromURL(*redirectCallback, cfg.HandleScheme)
-			if err != nil {
-
-				log.Println("Couldn't get code from url", err)
-				fmt.Print("Press 'Enter' to continue...")
-				bufio.NewReader(os.Stdin).ReadBytes('\n')
-				return
-			}
-			err = ipc.SendCode(code)
-			if err != nil {
-
-				log.Println("Couldn't send code to sovereign", err)
-				fmt.Print("Press 'Enter' to continue...")
-				bufio.NewReader(os.Stdin).ReadBytes('\n')
-				return
-			}
-			fmt.Print("Press 'Enter' to continue...")
-			bufio.NewReader(os.Stdin).ReadBytes('\n')
-			return
-		}
-
 		return
 	}
+
+	err = cfg.LoadEnv()
+	if err != nil {
+		log.Println("Couldn't load config", err)
+		fmt.Print("Press 'Enter' to continue...")
+		bufio.NewReader(os.Stdin).ReadBytes('\n')
+		log.Fatal(err)
+	}
+	// cli, _ := oauth2.NewClient(cfg)
+	// cli.OpenLoginProvider()
+
 	fmt.Print("Press 'Enter' to continue...")
 	bufio.NewReader(os.Stdin).ReadBytes('\n')
 	cli, err := oauth2.NewClient(cfg)
@@ -75,33 +71,32 @@ func main() {
 		log.Fatal(err)
 	}
 
-	if isRedirect {
-		// log.Println("Handle redirect", *redirectCallback)
-		code, err := oauth2.CodeFromURL(*redirectCallback, cfg.HandleScheme)
-		if err != nil {
-			log.Println("Couldn't retreive code from url", err)
-			fmt.Print("Press 'Enter' to continue...")
-			bufio.NewReader(os.Stdin).ReadBytes('\n')
-			return
-		}
-		accessToken, err := cli.GetToken(code)
-		if err != nil {
-			log.Println("Error parsing url", err)
-			fmt.Print("Press 'Enter' to continue...")
-			bufio.NewReader(os.Stdin).ReadBytes('\n')
-			return
-		}
-		fmt.Println("Access Token", accessToken)
-		fmt.Print("Press 'Enter' to continue...")
-		bufio.NewReader(os.Stdin).ReadBytes('\n')
+	// if isRedirect {
+	// 	// log.Println("Handle redirect", *redirectCallback)
+	// 	code, err := oauth2.CodeFromURL(*redirectCallback, cfg.HandleScheme)
+	// 	if err != nil {
+	// 		log.Println("Couldn't retreive code from url", err)
+	// 		fmt.Print("Press 'Enter' to continue...")
+	// 		bufio.NewReader(os.Stdin).ReadBytes('\n')
+	// 		return
+	// 	}
+	// 	accessToken, err := cli.GetToken(code)
+	// 	if err != nil {
+	// 		log.Println("Error parsing url", err)
+	// 		fmt.Print("Press 'Enter' to continue...")
+	// 		bufio.NewReader(os.Stdin).ReadBytes('\n')
+	// 		return
+	// 	}
+	// 	fmt.Println("Access Token", accessToken)
+	// 	fmt.Print("Press 'Enter' to continue...")
+	// 	bufio.NewReader(os.Stdin).ReadBytes('\n')
 
-		return
-	}
+	// 	return
+	// }
 
 	register.RegMe(cfg.HandleScheme, os.Args[0])
 	fmt.Println("starting browser...")
-	cli.OpenLoginProvider()
-	fmt.Print("Press 'Enter' to continue...")
-	bufio.NewReader(os.Stdin).ReadBytes('\n')
+	s := ipc.NewServer(*cli)
+	s.Run()
 	return
 }

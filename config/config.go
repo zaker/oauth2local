@@ -1,5 +1,4 @@
 package config
-
 import (
 	"fmt"
 	"os"
@@ -9,13 +8,22 @@ import (
 
 // Config for oauth local service
 type Config struct {
-	ClientID     string
-	ClientSecret string
-	TenantID     string
-	AppRedirect  string
-	HandleScheme string
-	IsServer     bool
+	ClientID      string
+	ClientSecret  string
+	TenantID      string
+	AppRedirect   string
+	HandleScheme  string
+	startAsServer bool
+	RedirectURL   string
 }
+type ClientHandle int
+
+// Client handle scenarios
+const (
+	None ClientHandle = iota
+	Redirect
+	AccessToken
+)
 
 const handleURLScheme = "loc-auth"
 
@@ -23,29 +31,46 @@ func redirectURL() string {
 	return handleURLScheme + "://callback"
 }
 
-// Load config for app
-func Load() (*Config, error) {
+func Init(isClient bool) *Config {
+
+	c := &Config{
+		HandleScheme:  handleURLScheme,
+		AppRedirect:   redirectURL(),
+		startAsServer: !isClient}
+	return c
+}
+
+// LoadEnv loads environment variables into config
+func (cfg *Config) LoadEnv() error {
 	err := godotenv.Load("C:\\bin\\.env")
 	if err != nil {
-		return nil, err
+		return err
 	}
-	c := &Config{HandleScheme: handleURLScheme, AppRedirect: redirectURL(), IsServer: true}
 	tenant := os.Getenv("AAD_TENANT_ID")
 	if len(tenant) == 0 {
-		return nil, fmt.Errorf("No tenant id => AAD_TENANT_ID")
+		return fmt.Errorf("No tenant id => AAD_TENANT_ID")
 	}
-	c.TenantID = tenant
+	cfg.TenantID = tenant
 
 	clientID := os.Getenv("AAD_CLIENT_ID")
 	if len(clientID) == 0 {
-		return nil, fmt.Errorf("No client id => AAD_CLIENT_ID")
+		return fmt.Errorf("No client id => AAD_CLIENT_ID")
 	}
-	c.ClientID = clientID
+	cfg.ClientID = clientID
 
 	clientSecret := os.Getenv("AAD_CLIENT_SECRET")
 	if len(clientSecret) == 0 {
-		return nil, fmt.Errorf("No client secret => AAD_CLIENT_SECRET")
+		return fmt.Errorf("No client secret => AAD_CLIENT_SECRET")
 	}
-	c.ClientSecret = clientSecret
-	return c, nil
+	cfg.ClientSecret = clientSecret
+	return nil
+}
+
+func (cfg *Config) ClientType() ClientHandle {
+
+	if cfg.startAsServer {
+		return None
+	}
+
+	return None
 }
