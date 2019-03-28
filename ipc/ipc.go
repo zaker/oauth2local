@@ -2,7 +2,6 @@ package ipc
 import (
 	"context"
 	"fmt"
-	"log"
 	"time"
 
 	pb "github.com/equinor/oauth2local/ipc/localauth"
@@ -16,11 +15,24 @@ type Server struct {
 	store    storage.Storage
 }
 
-type client struct{}
+type Client struct {
+	grpcConn *grpc.ClientConn
+	inner    pb.LocalAuthClient
+}
 
 func NewServer(cli oauth2.Client) (s *Server) {
 	s = new(Server)
 	s.oauthCli = cli
+	return
+}
+
+func NewClient() (c *Client, err error) {
+	c = new(Client)
+	c.grpcConn, err = grpc.Dial("pipe", grpc.WithInsecure(), grpc.WithContextDialer(localPipeDial))
+	if err != nil {
+		return nil, err
+	}
+	c.inner = pb.NewLocalAuthClient(c.grpcConn)
 	return
 }
 
@@ -45,47 +57,55 @@ func (s *Server) Ping(ctx context.Context, _ *pb.Empty) (*pb.PingResponse, error
 	return r, nil
 }
 
-func HasSovereign() (bool, error) {
-	conn, err := grpc.Dial("pipe", grpc.WithInsecure(), grpc.WithContextDialer(localPipeDial))
-	if err != nil {
-		return false, err
-	}
-	defer conn.Close()
-	c := pb.NewLocalAuthClient(conn)
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-	defer cancel()
-	r, err := c.Ping(ctx, new(pb.Empty))
-	if err != nil {
-		return false, err
-	}
-	return r.Message == "pong", nil
+func (c *Client) Close() {
+	c.grpcConn.Close()
 }
 
-func SendCode(code string) error {
-	conn, err := grpc.Dial("pipe", grpc.WithInsecure(), grpc.WithContextDialer(localPipeDial))
+func HasSovereign() bool {
+	c, err := NewClient()
 	if err != nil {
-		return err
+		return false
 	}
-	defer conn.Close()
-	c := pb.NewLocalAuthClient(conn)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+	r, err := c.inner.Ping(ctx, new(pb.Empty))
+	if err != nil {
+		return false
+	}
+	return r.Message == "pong"
+}
+
+func (c *Client) SendCallback(callbackURL string) error {
+
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*15)
 	defer cancel()
 
-	_, err = c.UpdateCode(ctx, &pb.UCRequest{Code: code})
+	_, err := c.inner.UpdateCode(ctx, &pb.UCRequest{Code: callbackURL})
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (s *Server) Run() {
+func (c *Client) GetAccessToken() (string, error) {
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*15)
+	defer cancel()
+
+	r, err := c.inner.GetAccessToken(ctx, &pb.Empty{})
+	if err != nil {
+		return "", err
+	}
+	return r.AccessToken, nil
+}
+
+func (s *Server) Serve() error {
 	lis, err := listener()
 	if err != nil {
-		log.Fatalf("failed to listen: %v", err)
+		return fmt.Errorf("failed to listen: %v", err)
 	}
 	gs := grpc.NewServer()
 	pb.RegisterLocalAuthServer(gs, s)
-	if err := gs.Serve(lis); err != nil {
-		log.Fatalf("failed to serve: %v", err)
-	}
+
+	return gs.Serve(lis)
 }

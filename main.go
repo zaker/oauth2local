@@ -14,89 +14,68 @@ import (
 
 var redirectCallback = flag.String("r", "", "Handles redirect from azure ad")
 
-func client(cfg *config.Config) error {
+func runClient(cfg *config.Config) error {
+	ipcClient, err := ipc.NewClient()
+	if err != nil {
+		return err
+	}
+	defer ipcClient.Close()
 
 	switch cfg.ClientType() {
 	case config.Redirect:
-		err := ipc.SendCode(cfg.RedirectURL)
+		err := ipcClient.SendCallback(cfg.RedirectURL)
 		if err != nil {
 
 			return err
 		}
-		fmt.Print("Press 'Enter' to continue...")
-		bufio.NewReader(os.Stdin).ReadBytes('\n')
+	case config.AccessToken:
+		a, err := ipcClient.GetAccessToken()
+		if err != nil {
+
+			fmt.Print(a)
+		}
 	}
 	return nil
 }
 
-func main() {
+func runServer(cfg *config.Config) error {
 
-	isClient, err := ipc.HasSovereign()
-
+	err := cfg.LoadEnv()
 	if err != nil {
-		log.Println("Sovereign check failed", err)
+		return fmt.Errorf("Couldn't load config: %v", err)
 
 	}
+
+	cli, err := oauth2.NewClient(cfg)
+	if err != nil {
+		return fmt.Errorf("Error with oauth client: %v", err)
+	}
+
+	fmt.Println("starting browser...")
+	cli.OpenLoginProvider()
+	s := ipc.NewServer(*cli)
+
+	return s.Serve()
+}
+
+func main() {
+
+	isClient := ipc.HasSovereign()
+
 	flag.Parse()
 
 	cfg := config.Init(isClient)
 	cfg.RedirectURL = *redirectCallback
-	if isClient {
-		err = client(cfg)
+	if cfg.AsClient() {
+		err := runClient(cfg)
 		if err != nil {
 
 			fmt.Println("Error...", err)
 			bufio.NewReader(os.Stdin).ReadBytes('\n')
 		}
-		return
+
+	} else {
+		register.RegMe(cfg.HandleScheme, os.Args[0])
+		log.Fatalf("Cannot serve: %v", runServer(cfg))
 	}
-
-	err = cfg.LoadEnv()
-	if err != nil {
-		log.Println("Couldn't load config", err)
-		fmt.Print("Press 'Enter' to continue...")
-		bufio.NewReader(os.Stdin).ReadBytes('\n')
-		log.Fatal(err)
-	}
-	// cli, _ := oauth2.NewClient(cfg)
-	// cli.OpenLoginProvider()
-
-	fmt.Print("Press 'Enter' to continue...")
-	bufio.NewReader(os.Stdin).ReadBytes('\n')
-	cli, err := oauth2.NewClient(cfg)
-	if err != nil {
-		log.Println("Couldn't start client", err)
-		fmt.Print("Press 'Enter' to continue...")
-		bufio.NewReader(os.Stdin).ReadBytes('\n')
-		log.Fatal(err)
-	}
-
-	// if isRedirect {
-	// 	// log.Println("Handle redirect", *redirectCallback)
-	// 	code, err := oauth2.CodeFromURL(*redirectCallback, cfg.HandleScheme)
-	// 	if err != nil {
-	// 		log.Println("Couldn't retreive code from url", err)
-	// 		fmt.Print("Press 'Enter' to continue...")
-	// 		bufio.NewReader(os.Stdin).ReadBytes('\n')
-	// 		return
-	// 	}
-	// 	accessToken, err := cli.GetToken(code)
-	// 	if err != nil {
-	// 		log.Println("Error parsing url", err)
-	// 		fmt.Print("Press 'Enter' to continue...")
-	// 		bufio.NewReader(os.Stdin).ReadBytes('\n')
-	// 		return
-	// 	}
-	// 	fmt.Println("Access Token", accessToken)
-	// 	fmt.Print("Press 'Enter' to continue...")
-	// 	bufio.NewReader(os.Stdin).ReadBytes('\n')
-
-	// 	return
-	// }
-
-	register.RegMe(cfg.HandleScheme, os.Args[0])
-	fmt.Println("starting browser...")
-	s := ipc.NewServer(*cli)
-	s.Run()
-	return
 }

@@ -40,6 +40,10 @@ func Init(isClient bool) *Config {
 	return c
 }
 
+func (cfg *Config) AsClient() bool {
+	return !cfg.startAsServer
+}
+
 // LoadEnv loads environment variables into config
 func (cfg *Config) LoadEnv() error {
 	err := godotenv.Load("C:\\bin\\.env")
