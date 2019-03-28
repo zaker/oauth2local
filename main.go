@@ -6,10 +6,10 @@ import (
 	"log"
 	"os"
 
-	"github.com/zaker/oauth2local/config"
-	"github.com/zaker/oauth2local/ipc"
-	"github.com/zaker/oauth2local/oauth2"
-	"github.com/zaker/oauth2local/register"
+	"github.com/equinor/oauth2local/config"
+	"github.com/equinor/oauth2local/ipc"
+	"github.com/equinor/oauth2local/oauth2"
+	"github.com/equinor/oauth2local/register"
 )
 
 var redirectCallback = flag.String("r", "", "Handles redirect from azure ad")

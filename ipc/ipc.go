@@ -5,9 +5,9 @@ import (
 	"log"
 	"time"
 
-	pb "github.com/zaker/oauth2local/ipc/localauth"
-	"github.com/zaker/oauth2local/oauth2"
-	"github.com/zaker/oauth2local/storage"
+	pb "github.com/equinor/oauth2local/ipc/localauth"
+	"github.com/equinor/oauth2local/oauth2"
+	"github.com/equinor/oauth2local/storage"
 	"google.golang.org/grpc"
 )
 

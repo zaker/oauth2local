@@ -1,4 +1,4 @@
-module github.com/zaker/oauth2local
+module github.com/equinor/oauth2local
 
 go 1.12
 

@@ -1,5 +1,4 @@
 package oauth2
-
 import (
 	"bytes"
 	"encoding/json"
@@ -9,7 +8,7 @@ import (
 
 	"github.com/pkg/browser"
 
-	"github.com/zaker/oauth2local/config"
+	"github.com/equinor/oauth2local/config"
 )
 
 type Client struct {
