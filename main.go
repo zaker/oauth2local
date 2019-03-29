@@ -6,12 +6,12 @@ import (
 	"log"
 	"os"
 
-	"github.com/equinor/oauth2local/storage"
-
+	"github.com/equinor/oauth2local/cmd"
 	"github.com/equinor/oauth2local/config"
 	"github.com/equinor/oauth2local/ipc"
 	"github.com/equinor/oauth2local/oauth2"
 	"github.com/equinor/oauth2local/register"
+	"github.com/equinor/oauth2local/storage"
 )
 
 var redirectCallback = flag.String("r", "", "Handles redirect from azure ad")
@@ -61,6 +61,7 @@ func runServer(cfg *config.Config) error {
 }
 
 func main() {
+	cmd.Execute()
 
 	isClient := ipc.HasSovereign()
 

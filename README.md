@@ -1,6 +1,6 @@
 # oauth2local
 
-An oauth client for bridging local scripts.
+An oauth client providing authenticated tokens to local processes.
 
 ## Generate GRPC server/client
 
