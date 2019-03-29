@@ -55,6 +55,10 @@ func CodeFromURL(callbackURL, scheme string) (string, error) {
 	return code, nil
 }
 
+func (cli *Client) CodeFromURL(callbackURL string) (string, error) {
+	return CodeFromURL(callbackURL, cli.cfg.HandleScheme)
+}
+
 func (cli *Client) GetToken(code string) (string, error) {
 
 	params := url.Values{}

@@ -1,0 +1,54 @@
+package ipc
+
+import (
+	"context"
+	"fmt"
+
+	pb "github.com/equinor/oauth2local/ipc/localauth"
+	"github.com/equinor/oauth2local/oauth2"
+	"github.com/equinor/oauth2local/storage"
+	"google.golang.org/grpc"
+)
+
+type Server struct {
+	oauthCli oauth2.Client
+	store    storage.Storage
+}
+
+func NewServer(cli oauth2.Client, store storage.Storage) (s *Server) {
+	return &Server{oauthCli: cli, store: store}
+}
+
+func (s *Server) GetAccessToken(ctx context.Context, _ *pb.Empty) (*pb.ATResponse, error) {
+
+	c, err := s.store.GetCode()
+	a, err := s.oauthCli.GetToken(c)
+
+	return &pb.ATResponse{AccessToken: a}, err
+}
+
+func (s *Server) Callback(ctx context.Context, cb *pb.CBRequest) (*pb.Empty, error) {
+
+	c, err := s.oauthCli.CodeFromURL(cb.Url)
+	if err != nil {
+		return nil, err
+	}
+	s.store.SetCode(c)
+	return &pb.Empty{}, nil
+
+}
+
+func (s *Server) Ping(ctx context.Context, _ *pb.Empty) (*pb.PingResponse, error) {
+	return &pb.PingResponse{Message: "pong"}, nil
+}
+
+func (s *Server) Serve() error {
+	lis, err := listener()
+	if err != nil {
+		return fmt.Errorf("failed to listen: %v", err)
+	}
+	gs := grpc.NewServer()
+	pb.RegisterLocalAuthServer(gs, s)
+
+	return gs.Serve(lis)
+}

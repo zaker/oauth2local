@@ -94,41 +94,41 @@ func (m *ATResponse) GetAccessToken() string {
 	return ""
 }
 
-type UCRequest struct {
-	Code                 string   `protobuf:"bytes,1,opt,name=code,proto3" json:"code,omitempty"`
+type CBRequest struct {
+	Url                  string   `protobuf:"bytes,1,opt,name=url,proto3" json:"url,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *UCRequest) Reset()         { *m = UCRequest{} }
-func (m *UCRequest) String() string { return proto.CompactTextString(m) }
-func (*UCRequest) ProtoMessage()    {}
-func (*UCRequest) Descriptor() ([]byte, []int) {
+func (m *CBRequest) Reset()         { *m = CBRequest{} }
+func (m *CBRequest) String() string { return proto.CompactTextString(m) }
+func (*CBRequest) ProtoMessage()    {}
+func (*CBRequest) Descriptor() ([]byte, []int) {
 	return fileDescriptor_e483730694cbd353, []int{2}
 }
 
-func (m *UCRequest) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_UCRequest.Unmarshal(m, b)
+func (m *CBRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_CBRequest.Unmarshal(m, b)
 }
-func (m *UCRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_UCRequest.Marshal(b, m, deterministic)
+func (m *CBRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_CBRequest.Marshal(b, m, deterministic)
 }
-func (m *UCRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_UCRequest.Merge(m, src)
+func (m *CBRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_CBRequest.Merge(m, src)
 }
-func (m *UCRequest) XXX_Size() int {
-	return xxx_messageInfo_UCRequest.Size(m)
+func (m *CBRequest) XXX_Size() int {
+	return xxx_messageInfo_CBRequest.Size(m)
 }
-func (m *UCRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_UCRequest.DiscardUnknown(m)
+func (m *CBRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_CBRequest.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_UCRequest proto.InternalMessageInfo
+var xxx_messageInfo_CBRequest proto.InternalMessageInfo
 
-func (m *UCRequest) GetCode() string {
+func (m *CBRequest) GetUrl() string {
 	if m != nil {
-		return m.Code
+		return m.Url
 	}
 	return ""
 }
@@ -175,29 +175,28 @@ func (m *PingResponse) GetMessage() string {
 func init() {
 	proto.RegisterType((*Empty)(nil), "localauth.Empty")
 	proto.RegisterType((*ATResponse)(nil), "localauth.ATResponse")
-	proto.RegisterType((*UCRequest)(nil), "localauth.UCRequest")
+	proto.RegisterType((*CBRequest)(nil), "localauth.CBRequest")
 	proto.RegisterType((*PingResponse)(nil), "localauth.PingResponse")
 }
 
 func init() { proto.RegisterFile("locauth.proto", fileDescriptor_e483730694cbd353) }
 
 var fileDescriptor_e483730694cbd353 = []byte{
-	// 226 bytes of a gzipped FileDescriptorProto
+	// 224 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0xe2, 0xcd, 0xc9, 0x4f, 0x4e,
 	0x2c, 0x2d, 0xc9, 0xd0, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0xe2, 0x04, 0x71, 0x73, 0x40, 0x02,
 	0x4a, 0xec, 0x5c, 0xac, 0xae, 0xb9, 0x05, 0x25, 0x95, 0x4a, 0x7a, 0x5c, 0x5c, 0x8e, 0x21, 0x41,
 	0xa9, 0xc5, 0x05, 0xf9, 0x79, 0xc5, 0xa9, 0x42, 0x0a, 0x5c, 0xdc, 0x89, 0xc9, 0xc9, 0xa9, 0xc5,
 	0xc5, 0x21, 0xf9, 0xd9, 0xa9, 0x79, 0x12, 0x8c, 0x0a, 0x8c, 0x1a, 0x9c, 0x41, 0xc8, 0x42, 0x4a,
-	0xf2, 0x5c, 0x9c, 0xa1, 0xce, 0x41, 0xa9, 0x85, 0xa5, 0xa9, 0xc5, 0x25, 0x42, 0x42, 0x5c, 0x2c,
-	0xc9, 0xf9, 0x29, 0xa9, 0x50, 0x75, 0x60, 0xb6, 0x92, 0x06, 0x17, 0x4f, 0x40, 0x66, 0x5e, 0x3a,
-	0xdc, 0x48, 0x09, 0x2e, 0xf6, 0xdc, 0xd4, 0xe2, 0xe2, 0xc4, 0x74, 0x98, 0x32, 0x18, 0xd7, 0x68,
-	0x2b, 0x23, 0x17, 0xa7, 0x0f, 0xc8, 0x45, 0x8e, 0xa5, 0x25, 0x19, 0x42, 0xc6, 0x5c, 0x2c, 0x20,
-	0x7d, 0x42, 0x02, 0x7a, 0x70, 0x57, 0xea, 0x81, 0x9d, 0x28, 0x25, 0x8e, 0x24, 0x82, 0x6c, 0xb4,
-	0x12, 0x83, 0x90, 0x35, 0x17, 0x9f, 0x7b, 0x6a, 0x89, 0x23, 0xc2, 0x7d, 0x58, 0xb4, 0x8b, 0x22,
-	0x89, 0x20, 0xbc, 0xaa, 0xc4, 0x20, 0x64, 0xc6, 0xc5, 0x15, 0x5a, 0x90, 0x92, 0x58, 0x92, 0xea,
-	0x9c, 0x9f, 0x92, 0x2a, 0x24, 0x82, 0xa4, 0x0c, 0xee, 0x43, 0x29, 0x0c, 0xe3, 0x94, 0x18, 0x92,
-	0xd8, 0xc0, 0xa1, 0x69, 0x0c, 0x08, 0x00, 0x00, 0xff, 0xff, 0xb2, 0x71, 0x2e, 0x12, 0x5e, 0x01,
-	0x00, 0x00,
+	0xb2, 0x5c, 0x9c, 0xce, 0x4e, 0x41, 0xa9, 0x85, 0xa5, 0xa9, 0xc5, 0x25, 0x42, 0x02, 0x5c, 0xcc,
+	0xa5, 0x45, 0x39, 0x50, 0x65, 0x20, 0xa6, 0x92, 0x06, 0x17, 0x4f, 0x40, 0x66, 0x5e, 0x3a, 0xdc,
+	0x40, 0x09, 0x2e, 0xf6, 0xdc, 0xd4, 0xe2, 0xe2, 0xc4, 0xf4, 0x54, 0xa8, 0x2a, 0x18, 0xd7, 0x68,
+	0x33, 0x23, 0x17, 0xa7, 0x0f, 0xc8, 0x3d, 0x8e, 0xa5, 0x25, 0x19, 0x42, 0xc6, 0x5c, 0x2c, 0x20,
+	0x7d, 0x42, 0x02, 0x7a, 0x70, 0x37, 0xea, 0x81, 0x1d, 0x28, 0x25, 0x8e, 0x24, 0x82, 0x6c, 0xb4,
+	0x12, 0x83, 0x90, 0x35, 0x17, 0x9f, 0x7b, 0x6a, 0x89, 0x23, 0xc2, 0x75, 0x58, 0xb4, 0x8b, 0x22,
+	0x89, 0x20, 0x3c, 0xaa, 0xc4, 0x20, 0x64, 0xc2, 0xc5, 0xe1, 0x9c, 0x98, 0x93, 0x93, 0x94, 0x98,
+	0x9c, 0x2d, 0x24, 0x82, 0xa4, 0x08, 0xee, 0x3b, 0x29, 0x0c, 0xc3, 0x94, 0x18, 0x92, 0xd8, 0xc0,
+	0x21, 0x69, 0x0c, 0x08, 0x00, 0x00, 0xff, 0xff, 0xd2, 0xef, 0x5e, 0xdf, 0x5a, 0x01, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -214,7 +213,7 @@ const _ = grpc.SupportPackageIsVersion4
 type LocalAuthClient interface {
 	Ping(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*PingResponse, error)
 	GetAccessToken(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*ATResponse, error)
-	UpdateCode(ctx context.Context, in *UCRequest, opts ...grpc.CallOption) (*Empty, error)
+	Callback(ctx context.Context, in *CBRequest, opts ...grpc.CallOption) (*Empty, error)
 }
 
 type localAuthClient struct {
@@ -243,9 +242,9 @@ func (c *localAuthClient) GetAccessToken(ctx context.Context, in *Empty, opts ..
 	return out, nil
 }
 
-func (c *localAuthClient) UpdateCode(ctx context.Context, in *UCRequest, opts ...grpc.CallOption) (*Empty, error) {
+func (c *localAuthClient) Callback(ctx context.Context, in *CBRequest, opts ...grpc.CallOption) (*Empty, error) {
 	out := new(Empty)
-	err := c.cc.Invoke(ctx, "/localauth.LocalAuth/UpdateCode", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/localauth.LocalAuth/Callback", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -256,7 +255,7 @@ func (c *localAuthClient) UpdateCode(ctx context.Context, in *UCRequest, opts ..
 type LocalAuthServer interface {
 	Ping(context.Context, *Empty) (*PingResponse, error)
 	GetAccessToken(context.Context, *Empty) (*ATResponse, error)
-	UpdateCode(context.Context, *UCRequest) (*Empty, error)
+	Callback(context.Context, *CBRequest) (*Empty, error)
 }
 
 // UnimplementedLocalAuthServer can be embedded to have forward compatible implementations.
@@ -269,8 +268,8 @@ func (*UnimplementedLocalAuthServer) Ping(ctx context.Context, req *Empty) (*Pin
 func (*UnimplementedLocalAuthServer) GetAccessToken(ctx context.Context, req *Empty) (*ATResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetAccessToken not implemented")
 }
-func (*UnimplementedLocalAuthServer) UpdateCode(ctx context.Context, req *UCRequest) (*Empty, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method UpdateCode not implemented")
+func (*UnimplementedLocalAuthServer) Callback(ctx context.Context, req *CBRequest) (*Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Callback not implemented")
 }
 
 func RegisterLocalAuthServer(s *grpc.Server, srv LocalAuthServer) {
@@ -313,20 +312,20 @@ func _LocalAuth_GetAccessToken_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
-func _LocalAuth_UpdateCode_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UCRequest)
+func _LocalAuth_Callback_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CBRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(LocalAuthServer).UpdateCode(ctx, in)
+		return srv.(LocalAuthServer).Callback(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/localauth.LocalAuth/UpdateCode",
+		FullMethod: "/localauth.LocalAuth/Callback",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(LocalAuthServer).UpdateCode(ctx, req.(*UCRequest))
+		return srv.(LocalAuthServer).Callback(ctx, req.(*CBRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -344,8 +343,8 @@ var _LocalAuth_serviceDesc = grpc.ServiceDesc{
 			Handler:    _LocalAuth_GetAccessToken_Handler,
 		},
 		{
-			MethodName: "UpdateCode",
-			Handler:    _LocalAuth_UpdateCode_Handler,
+			MethodName: "Callback",
+			Handler:    _LocalAuth_Callback_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

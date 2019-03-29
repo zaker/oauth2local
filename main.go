@@ -6,6 +6,8 @@ import (
 	"log"
 	"os"
 
+	"github.com/equinor/oauth2local/storage"
+
 	"github.com/equinor/oauth2local/config"
 	"github.com/equinor/oauth2local/ipc"
 	"github.com/equinor/oauth2local/oauth2"
@@ -20,7 +22,7 @@ func runClient(cfg *config.Config) error {
 		return err
 	}
 	defer ipcClient.Close()
-
+	log.Println("Running client", cfg.ClientType())
 	switch cfg.ClientType() {
 	case config.Redirect:
 		err := ipcClient.SendCallback(cfg.RedirectURL)
@@ -53,7 +55,7 @@ func runServer(cfg *config.Config) error {
 
 	fmt.Println("starting browser...")
 	cli.OpenLoginProvider()
-	s := ipc.NewServer(*cli)
+	s := ipc.NewServer(*cli, &storage.Memory{})
 
 	return s.Serve()
 }
@@ -73,6 +75,8 @@ func main() {
 			fmt.Println("Error...", err)
 			bufio.NewReader(os.Stdin).ReadBytes('\n')
 		}
+		fmt.Println("Success...", err)
+		bufio.NewReader(os.Stdin).ReadBytes('\n')
 
 	} else {
 		register.RegMe(cfg.HandleScheme, os.Args[0])

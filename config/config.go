@@ -75,6 +75,8 @@ func (cfg *Config) ClientType() ClientHandle {
 	if cfg.startAsServer {
 		return None
 	}
-
+	if len(cfg.RedirectURL) > 0 {
+		return Redirect
+	}
 	return None
 }
