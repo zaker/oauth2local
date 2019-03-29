@@ -1,23 +1,40 @@
 package cmd
 import (
 	"fmt"
+	"log"
 
+	"github.com/equinor/oauth2local/ipc"
+	"github.com/equinor/oauth2local/oauth2"
+	"github.com/equinor/oauth2local/storage"
 	"github.com/spf13/cobra"
 )
 
 // serveCmd represents the serve command
 var serveCmd = &cobra.Command{
 	Use:   "serve",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
+	Short: "serve a local auth provider",
+	Long:  `serve a local auth provider.`,
+	Run:   runServe,
+}
 
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
-	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("serve called")
-	},
+func runServe(cmd *cobra.Command, args []string) {
+
+	if ipc.HasSovereign() {
+		log.Println("A server is already running")
+		return
+	}
+
+	cli, err := oauth2.NewClient()
+	if err != nil {
+		log.Printf("Error with oauth client: %v", err)
+		return
+	}
+
+	fmt.Println("starting browser...")
+	cli.OpenLoginProvider()
+	s := ipc.NewServer(*cli, storage.Memory())
+
+	log.Fatalf("Cannot serve: %v", s.Serve())
 }
 
 func init() {

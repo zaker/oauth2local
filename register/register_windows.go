@@ -19,7 +19,7 @@ func isRegistered(urlScheme, locauthPath string) (bool, error) {
 		return false, err
 	}
 
-	if val == "\""+locauthPath+"\" -r \"%1\"" {
+	if val == "\""+locauthPath+"\" callback \"%1\"" {
 		return true, nil
 	}
 	return false, nil
@@ -75,7 +75,7 @@ func RegMe(urlScheme, locauthPath string) error {
 	}
 	ck.Close()
 
-	err = k.SetStringValue("", "\""+locauthPath+"\" -r \"%1\"")
+	err = k.SetStringValue("", "\""+locauthPath+"\" callback \"%1\"")
 	if err != nil {
 		return err
 	}

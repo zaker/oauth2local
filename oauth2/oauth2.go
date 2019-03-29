@@ -8,16 +8,26 @@ import (
 
 	"github.com/pkg/browser"
 
-	"github.com/equinor/oauth2local/config"
+	"github.com/spf13/viper"
 )
 
 type Client struct {
-	cfg *config.Config
-	net *http.Client
+	net          *http.Client
+	tenantID     string
+	appRedirect  string
+	clientID     string
+	clientSecret string
+	handleScheme string
 }
 
-func NewClient(cfg *config.Config) (*Client, error) {
-	cli := &Client{cfg: cfg, net: new(http.Client)}
+func NewClient() (*Client, error) {
+
+	cli := &Client{net: new(http.Client),
+		tenantID:     viper.GetString("TenantID"),
+		appRedirect:  "loc-auth://callback",
+		clientID:     viper.GetString("ClientID"),
+		clientSecret: viper.GetString("ClientSecret"),
+		handleScheme: viper.GetString("CustomScheme")}
 
 	return cli, nil
 }
@@ -30,11 +40,11 @@ func tokenURL(tenant string) string {
 func (cli *Client) OpenLoginProvider() error {
 	params := url.Values{}
 
-	params.Set("redirect_uri", cli.cfg.AppRedirect)
-	params.Set("client_id", cli.cfg.ClientID)
+	params.Set("redirect_uri", cli.appRedirect)
+	params.Set("client_id", cli.clientID)
 	params.Set("response_type", "code")
 	params.Set("state", "none")
-	loginURL := fmt.Sprintf("https://login.microsoftonline.com/%s/oauth2/authorize?%s", cli.cfg.TenantID, params.Encode())
+	loginURL := fmt.Sprintf("https://login.microsoftonline.com/%s/oauth2/authorize?%s", cli.tenantID, params.Encode())
 	browser.OpenURL(loginURL)
 	return nil
 }
@@ -56,22 +66,22 @@ func CodeFromURL(callbackURL, scheme string) (string, error) {
 }
 
 func (cli *Client) CodeFromURL(callbackURL string) (string, error) {
-	return CodeFromURL(callbackURL, cli.cfg.HandleScheme)
+	return CodeFromURL(callbackURL, cli.handleScheme)
 }
 
 func (cli *Client) GetToken(code string) (string, error) {
 
 	params := url.Values{}
 
-	params.Set("redirect_uri", cli.cfg.AppRedirect)
-	params.Set("client_id", cli.cfg.ClientID)
-	params.Set("client_secret", cli.cfg.ClientSecret)
+	params.Set("redirect_uri", cli.appRedirect)
+	params.Set("client_id", cli.clientID)
+	params.Set("client_secret", cli.clientSecret)
 	params.Set("grant_type", "authorization_code")
 	params.Set("code", code)
-	params.Set("resource", cli.cfg.ClientID)
+	params.Set("resource", cli.clientID)
 	body := bytes.NewBufferString(params.Encode())
 
-	tokenURL := tokenURL(cli.cfg.TenantID)
+	tokenURL := tokenURL(cli.tenantID)
 
 	resp, err := cli.net.Post(tokenURL, "application/x-www-form-urlencoded", body)
 	if err != nil {
