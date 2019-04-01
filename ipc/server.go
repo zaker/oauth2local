@@ -3,6 +3,7 @@ package ipc
 import (
 	"context"
 	"fmt"
+	"log"
 
 	pb "github.com/equinor/oauth2local/ipc/localauth"
 	"github.com/equinor/oauth2local/oauth2"
@@ -22,9 +23,16 @@ func NewServer(cli oauth2.Client, store storage.Storage) (s *Server) {
 func (s *Server) GetAccessToken(ctx context.Context, _ *pb.Empty) (*pb.ATResponse, error) {
 
 	c, err := s.store.GetCode()
+	if err != nil {
+		log.Println("Error:", err)
+		return nil, err
+	}
 	a, err := s.oauthCli.GetToken(c)
-
-	return &pb.ATResponse{AccessToken: a}, err
+	if err != nil {
+		log.Println("Error:", err)
+		return nil, err
+	}
+	return &pb.ATResponse{AccessToken: a}, nil
 }
 
 func (s *Server) Callback(ctx context.Context, cb *pb.CBRequest) (*pb.Empty, error) {

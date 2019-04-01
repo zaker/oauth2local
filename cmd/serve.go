@@ -3,6 +3,8 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/spf13/viper"
+
 	"github.com/equinor/oauth2local/ipc"
 	"github.com/equinor/oauth2local/oauth2"
 	"github.com/equinor/oauth2local/storage"
@@ -18,7 +20,7 @@ var serveCmd = &cobra.Command{
 }
 
 func runServe(cmd *cobra.Command, args []string) {
-
+	fmt.Println("Using config file:", viper.ConfigFileUsed())
 	if ipc.HasSovereign() {
 		log.Println("A server is already running")
 		return
@@ -49,4 +51,5 @@ func init() {
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
 	// serveCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+
 }

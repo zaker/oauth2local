@@ -95,6 +95,12 @@ func (cli *Client) GetToken(code string) (string, error) {
 		return "", err
 	}
 
-	accessToken := dat["access_token"].(string)
-	return accessToken, nil
+	if accessToken, ok := dat["access_token"]; ok {
+		return accessToken.(string), nil
+	}
+	if clientError, ok := dat["access_token"]; ok {
+		return "", fmt.Errorf("Did not receive token: %v", clientError)
+	}
+
+	return "", nil
 }

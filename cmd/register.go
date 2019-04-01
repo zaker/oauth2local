@@ -12,13 +12,8 @@ import (
 // registerCmd represents the register command
 var registerCmd = &cobra.Command{
 	Use:   "register",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Short: "Register app ass url handler for custom url",
+	Long:  `Register app ass url handler for custom url`,
 	Run: func(cmd *cobra.Command, args []string) {
 		register.RegMe(viper.GetString("CustomScheme"), os.Args[0])
 	},
