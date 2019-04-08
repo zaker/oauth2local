@@ -1,5 +1,4 @@
 package cmd
-
 import (
 	"os"
 
@@ -45,7 +44,6 @@ func initDefaultConfig() {
 	viper.SetDefault("TenantID", "common")
 	viper.SetDefault("ClientID", "")
 	viper.SetDefault("ClientSecret", "")
-	viper.SetDefault("CustomScheme", "loc-auth")
 }
 
 // initConfig reads in config file and ENV variables if set.
