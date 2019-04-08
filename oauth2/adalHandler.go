@@ -18,6 +18,7 @@ import (
 
 type AdalHandler struct {
 	net           *http.Client
+	authServer    string
 	tenantID      string
 	appRedirect   string
 	clientID      string
@@ -91,9 +92,9 @@ func (h AdalHandler) renewTokens() error {
 	return nil
 }
 
-func tokenURL(tenant string) string {
+func (h AdalHandler) tokenURL() string {
 
-	return fmt.Sprintf("https://login.microsoftonline.com/%s/oauth2/token", tenant)
+	return fmt.Sprintf("%s/%s/oauth2/token", h.authServer, h.tenantID)
 }
 
 func (h AdalHandler) OpenLoginProvider() error {
@@ -104,7 +105,7 @@ func (h AdalHandler) OpenLoginProvider() error {
 	params.Set("response_type", "code")
 	params.Set("state", "none")
 	params.Set("code_challenge", h.codeChallenge)
-	loginURL := fmt.Sprintf("https://login.microsoftonline.com/%s/oauth2/authorize?%s", h.tenantID, params.Encode())
+	loginURL := fmt.Sprintf("%s/%s/oauth2/authorize?%s", h.authServer, h.tenantID, params.Encode())
 	browser.OpenURL(loginURL)
 	return nil
 }
@@ -146,7 +147,7 @@ func (h AdalHandler) updateTokens(code, grant string) error {
 	params.Set("resource", h.clientID)
 	body := bytes.NewBufferString(params.Encode())
 
-	tokenURL := tokenURL(h.tenantID)
+	tokenURL := h.tokenURL()
 	resp, err := h.net.Post(tokenURL, "application/x-www-form-urlencoded", body)
 	if err != nil {
 		return fmt.Errorf("Error posting to token url %s: %s ", tokenURL, err)
