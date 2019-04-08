@@ -11,7 +11,7 @@ func TestAdalHandler_UpdateFromRedirect(t *testing.T) {
 	}
 	tests := []struct {
 		name    string
-		h       AdalHandler
+		h       Handler
 		args    args
 		wantErr bool
 	}{

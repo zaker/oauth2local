@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"sync"
 	"time"
 
 	jwt "github.com/dgrijalva/jwt-go"
@@ -28,6 +29,7 @@ type AdalHandler struct {
 	store         storage.Storage
 	jwtParser     *jwt.Parser
 	ticker        *time.Ticker
+	mut           *sync.Mutex
 }
 
 const (
@@ -215,6 +217,9 @@ func (h AdalHandler) UpdateFromRedirect(redirect *url.URL) error {
 
 	// TODO: Validate state/nonce
 	// Decode to authorize code
+	h.mut.Lock()
+	defer h.mut.Unlock()
+
 	c, err := h.CodeFromURL(redirect.String())
 	if err != nil {
 		return err
@@ -229,6 +234,7 @@ func (h AdalHandler) UpdateFromRedirect(redirect *url.URL) error {
 }
 
 func (h AdalHandler) UpdateFromCode(code string) error {
-
+	h.mut.Lock()
+	defer h.mut.Unlock()
 	return nil
 }
