@@ -8,7 +8,6 @@ require (
 	github.com/golang/protobuf v1.3.1
 	github.com/google/uuid v1.1.1
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
-	github.com/joho/godotenv v1.3.0
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/pkg/browser v0.0.0-20180916011732-0a3d74bf9ce4
 	github.com/spf13/cobra v0.0.3
