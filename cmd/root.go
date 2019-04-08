@@ -39,6 +39,13 @@ func init() {
 	// rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
 
+func initDefaultConfig() {
+	viper.SetDefault("Authserver", "https://login.microsoftonline.com")
+	viper.SetDefault("TenantID", "common")
+	viper.SetDefault("ClientID", "")
+	viper.SetDefault("ClientSecret", "")
+}
+
 // initConfig reads in config file and ENV variables if set.
 func initConfig() {
 	if cfgFile != "" {

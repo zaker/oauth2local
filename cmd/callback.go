@@ -31,7 +31,7 @@ var callbackCmd = &cobra.Command{
 	},
 }
 
-func sendCallback( args []string)error{
+func sendCallback(args []string) error {
 	cli, err := ipc.NewClient()
 	if err != nil {
 		return err
