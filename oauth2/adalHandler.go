@@ -3,10 +3,10 @@ package oauth2
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
-	"strings"
 	"sync"
 	"time"
 
@@ -20,19 +20,13 @@ type AdalHandler struct {
 	net           *http.Client
 	o2o           Oauth2Settings
 	appRedirect   string
-	handleScheme  string
+	scheme        string
+	sessionState  string
 	codeChallenge string
 	store         storage.Storage
 	jwtParser     *jwt.Parser
 	ticker        *time.Ticker
 	mut           *sync.Mutex
-}
-
-type Oauth2Settings struct {
-	TenantID     string
-	AuthServer   string
-	ClientID     string
-	ClientSecret string
 }
 
 const (
@@ -44,22 +38,10 @@ func generateCodeChallenge() string {
 	return uuid.New().String() + "-" + uuid.New().String()
 }
 
-func (o2o Oauth2Settings) Valid() bool {
-
-	if o2o.AuthServer == "" {
-		return false
-	}
-	strings.TrimRight(o2o.AuthServer, "/")
-
-	if o2o.ClientID == "" {
-		return false
-	}
-
-	if o2o.ClientSecret == "" {
-		return false
-	}
-	return true
+func generateSessionState() string {
+	return uuid.New().String() + "-" + uuid.New().String()
 }
+
 func NewAdalHandler(o2o Oauth2Settings, store storage.Storage, scheme string) (*AdalHandler, error) {
 
 	if !o2o.Valid() {
@@ -70,7 +52,8 @@ func NewAdalHandler(o2o Oauth2Settings, store storage.Storage, scheme string) (*
 		net:           new(http.Client),
 		o2o:           o2o,
 		appRedirect:   scheme + "://callback",
-		handleScheme:  scheme,
+		scheme:        scheme,
+		sessionState:  generateSessionState(),
 		codeChallenge: generateCodeChallenge(),
 		store:         store,
 		jwtParser:     new(jwt.Parser),
@@ -143,32 +126,12 @@ func (h *AdalHandler) LoginProviderURL() (string, error) {
 	params.Set("redirect_uri", h.appRedirect)
 	params.Set("client_id", h.o2o.ClientID)
 	params.Set("response_type", "code")
-	params.Set("state", "none")
+	params.Set("state", h.sessionState)
 	params.Set("code_challenge", h.codeChallenge)
 
 	u.RawQuery = params.Encode()
 	return u.String(), nil
 
-}
-
-func CodeFromURL(callbackURL, scheme string) (string, error) {
-	u, err := url.Parse(callbackURL)
-	if err != nil {
-		return "", err
-	}
-
-	if u.Scheme != scheme {
-		return "", fmt.Errorf("App doesn't handle scheme: %s", u.Scheme)
-
-	}
-	params := u.Query()
-	code := params.Get("code")
-
-	return code, nil
-}
-
-func (h *AdalHandler) CodeFromURL(callbackURL string) (string, error) {
-	return CodeFromURL(callbackURL, h.handleScheme)
 }
 
 func (h *AdalHandler) updateTokens(code, grant string) error {
@@ -254,17 +217,19 @@ func (h *AdalHandler) GetAccessToken() (string, error) {
 }
 func (h *AdalHandler) UpdateFromRedirect(redirect *url.URL) error {
 
-	// TODO: Validate state/nonce
-	// Decode to authorize code
+	rp := DecodeRedirect(redirect)
+	if rp.state != h.sessionState {
+		return errors.New("Not a valid state")
+	}
+
+	if rp.scheme != h.scheme {
+		return errors.New("Not a valid scheme")
+	}
+
 	h.mut.Lock()
 	defer h.mut.Unlock()
 
-	c, err := h.CodeFromURL(redirect.String())
-	if err != nil {
-		return err
-	}
-
-	err = h.updateTokens(c, authGrant)
+	err := h.updateTokens(rp.code, authGrant)
 	if err != nil {
 		return err
 	}
