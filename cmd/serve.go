@@ -8,7 +8,6 @@ import (
 
 	"github.com/equinor/oauth2local/ipc"
 	"github.com/equinor/oauth2local/oauth2"
-	"github.com/equinor/oauth2local/storage"
 	"github.com/spf13/cobra"
 	jww "github.com/spf13/jwalterweatherman"
 	"github.com/spf13/viper"
@@ -35,15 +34,13 @@ func runServe(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	oauthHandler, err := oauth2.NewAdalHandler(
+	oauthHandler, err := oauth2.NewAdal(oauth2.WithOauth2Settings(
 		oauth2.Oauth2Settings{
 			AuthServer:   viper.GetString("Authserver"),
 			TenantID:     viper.GetString("TenantID"),
 			ClientID:     viper.GetString("ClientID"),
 			ClientSecret: viper.GetString("ClientSecret"),
-		},
-		storage.Memory(),
-		viper.GetString("CustomScheme"))
+		}))
 	if err != nil {
 		log.Printf("Error with oauth client: %v", err)
 		return

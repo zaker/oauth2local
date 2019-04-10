@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strings"
 	"sync"
 	"time"
 
@@ -17,7 +18,7 @@ import (
 )
 
 type AdalHandler struct {
-	net           *http.Client
+	client        *http.Client
 	o2o           Oauth2Settings
 	appRedirect   string
 	scheme        string
@@ -27,12 +28,17 @@ type AdalHandler struct {
 	jwtParser     *jwt.Parser
 	ticker        *time.Ticker
 	mut           *sync.Mutex
+	renewer       func()
 }
 
 const (
 	authGrant    = "authorization_code"
 	refreshGrant = "refresh_token"
 )
+
+type Option interface {
+	apply(*AdalHandler) error
+}
 
 func generateCodeChallenge() string {
 	return uuid.New().String() + "-" + uuid.New().String()
@@ -41,34 +47,82 @@ func generateCodeChallenge() string {
 func generateSessionState() string {
 	return uuid.New().String() + "-" + uuid.New().String()
 }
-
-func NewAdalHandler(o2o Oauth2Settings, store storage.Storage, scheme string) (*AdalHandler, error) {
-
-	if !o2o.Valid() {
-		return nil, fmt.Errorf("Oauth2 Settings is not valid")
+func (h *AdalHandler) defaultRenewer() {
+	for range h.ticker.C {
+		err := h.renewTokens()
+		if err != nil {
+			jww.INFO.Println("Couldn't renew token", err)
+		}
 	}
+}
 
-	h := &AdalHandler{
-		net:           new(http.Client),
-		o2o:           o2o,
-		appRedirect:   scheme + "://callback",
-		scheme:        scheme,
+func NewAdal(opts ...Option) (*AdalHandler, error) {
+
+	dopts := &AdalHandler{
+		client:        new(http.Client),
+		o2o:           Oauth2Settings{},
+		appRedirect:   "loc-auth://callback",
+		scheme:        "loc-auth",
 		sessionState:  generateSessionState(),
 		codeChallenge: generateCodeChallenge(),
-		store:         store,
+		store:         storage.Memory(),
 		jwtParser:     new(jwt.Parser),
 		ticker:        time.NewTicker(1 * time.Minute),
 		mut:           new(sync.Mutex)}
 
-	go func() {
-		for range h.ticker.C {
-			err := h.renewTokens()
-			if err != nil {
-				jww.INFO.Println("Couldn't renew token", err)
-			}
-		}
-	}()
-	return h, nil
+	dopts.renewer = dopts.defaultRenewer
+
+	for _, opt := range opts {
+		opt.apply(dopts)
+	}
+
+	if !dopts.o2o.Valid() {
+		return nil, fmt.Errorf("Oauth2 Settings is not valid")
+	}
+
+	if dopts.renewer == nil {
+		return nil, fmt.Errorf("No acces token renewer defined")
+	}
+
+	go dopts.renewer()
+	return dopts, nil
+}
+
+func WithOauth2Settings(o2o Oauth2Settings) Option {
+	return newFuncOption(func(h *AdalHandler) error {
+		h.o2o = o2o
+		h.o2o.AuthServer = strings.TrimRight(h.o2o.AuthServer, "/")
+		h.o2o.AuthServer = strings.TrimSpace(h.o2o.AuthServer)
+		return nil
+	})
+}
+
+func WithState(state string) Option {
+	return newFuncOption(func(h *AdalHandler) error {
+		h.sessionState = state
+		return nil
+	})
+}
+
+func WithRenewer(renewer func()) Option {
+	return newFuncOption(func(h *AdalHandler) error {
+		h.renewer = renewer
+		return nil
+	})
+}
+
+func WithClient(client *http.Client) Option {
+	return newFuncOption(func(h *AdalHandler) error {
+		h.client = client
+		return nil
+	})
+}
+
+func WithStore(store storage.Storage) Option {
+	return newFuncOption(func(h *AdalHandler) error {
+		h.store = store
+		return nil
+	})
 }
 
 func (h *AdalHandler) renewTokens() error {
@@ -152,7 +206,7 @@ func (h *AdalHandler) updateTokens(code, grant string) error {
 	body := bytes.NewBufferString(params.Encode())
 
 	tokenURL := h.tokenURL()
-	resp, err := h.net.Post(tokenURL, "application/x-www-form-urlencoded", body)
+	resp, err := h.client.Post(tokenURL, "application/x-www-form-urlencoded", body)
 	if err != nil {
 		return fmt.Errorf("Error posting to token url %s: %s ", tokenURL, err)
 	}
