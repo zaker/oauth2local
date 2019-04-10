@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"log"
+	"os"
 
 	"github.com/equinor/oauth2local/ipc"
 	"github.com/spf13/cobra"
@@ -16,12 +16,14 @@ var tokenCmd = &cobra.Command{
 
 		cli, err := ipc.NewClient()
 		if err != nil {
-			log.Fatal(err)
+			jww.ERROR.Println(err)
+			os.Exit(1)
 		}
 
 		a, err := cli.GetAccessToken()
 		if err != nil {
-			log.Fatal(err)
+			jww.ERROR.Println(err)
+			os.Exit(1)
 		}
 
 		jww.INFO.Println(a)

@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"log"
+	"os"
 
 	"github.com/pkg/browser"
 
@@ -24,7 +25,8 @@ var serveCmd = &cobra.Command{
 func runServe(cmd *cobra.Command, args []string) {
 
 	if viper.ConfigFileUsed() == "" {
-		log.Fatal("No config file loaded")
+		jww.ERROR.Println("No config file loaded")
+		os.Exit(1)
 	}
 
 	jww.INFO.Println("Using config file:", viper.ConfigFileUsed())
@@ -58,7 +60,7 @@ func runServe(cmd *cobra.Command, args []string) {
 	browser.OpenURL(lpu)
 	s := ipc.NewServer(oauthHandler)
 
-	log.Fatalf("Cannot serve: %v", s.Serve())
+	jww.ERROR.Println("Cannot serve:", s.Serve())
 }
 
 func init() {
