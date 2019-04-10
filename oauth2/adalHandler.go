@@ -4,26 +4,22 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"net/url"
+	"strings"
 	"sync"
 	"time"
 
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/equinor/oauth2local/storage"
 	"github.com/google/uuid"
-	"github.com/pkg/browser"
-	"github.com/spf13/viper"
+	jww "github.com/spf13/jwalterweatherman"
 )
 
 type AdalHandler struct {
 	net           *http.Client
-	authServer    string
-	tenantID      string
+	o2o           Oauth2Settings
 	appRedirect   string
-	clientID      string
-	clientSecret  string
 	handleScheme  string
 	codeChallenge string
 	store         storage.Storage
@@ -32,37 +28,67 @@ type AdalHandler struct {
 	mut           *sync.Mutex
 }
 
+type Oauth2Settings struct {
+	TenantID     string
+	AuthServer   string
+	ClientID     string
+	ClientSecret string
+}
+
 const (
 	authGrant    = "authorization_code"
 	refreshGrant = "refresh_token"
 )
 
-func NewAdalHandler(store storage.Storage) (AdalHandler, error) {
+func generateCodeChallenge() string {
+	return uuid.New().String() + "-" + uuid.New().String()
+}
 
-	h := AdalHandler{
+func (o2o Oauth2Settings) Valid() bool {
+
+	if o2o.AuthServer == "" {
+		return false
+	}
+	strings.TrimRight(o2o.AuthServer, "/")
+
+	if o2o.ClientID == "" {
+		return false
+	}
+
+	if o2o.ClientSecret == "" {
+		return false
+	}
+	return true
+}
+func NewAdalHandler(o2o Oauth2Settings, store storage.Storage, scheme string) (*AdalHandler, error) {
+
+	if !o2o.Valid() {
+		return nil, fmt.Errorf("Oauth2 Settings is not valid")
+	}
+
+	h := &AdalHandler{
 		net:           new(http.Client),
-		tenantID:      viper.GetString("TenantID"),
-		appRedirect:   viper.GetString("CustomScheme") + "://callback",
-		clientID:      viper.GetString("ClientID"),
-		clientSecret:  viper.GetString("ClientSecret"),
-		handleScheme:  viper.GetString("CustomScheme"),
-		codeChallenge: uuid.New().String() + "-" + uuid.New().String(),
+		o2o:           o2o,
+		appRedirect:   scheme + "://callback",
+		handleScheme:  scheme,
+		codeChallenge: generateCodeChallenge(),
 		store:         store,
 		jwtParser:     new(jwt.Parser),
-		ticker:        time.NewTicker(1 * time.Minute)}
+		ticker:        time.NewTicker(1 * time.Minute),
+		mut:           new(sync.Mutex)}
 
 	go func() {
 		for range h.ticker.C {
 			err := h.renewTokens()
 			if err != nil {
-				log.Println("Couldn't renew token", err)
+				jww.INFO.Println("Couldn't renew token", err)
 			}
 		}
 	}()
 	return h, nil
 }
 
-func (h AdalHandler) renewTokens() error {
+func (h *AdalHandler) renewTokens() error {
 
 	a, err := h.store.GetToken(storage.AccessToken)
 	if err != nil {
@@ -77,7 +103,7 @@ func (h AdalHandler) renewTokens() error {
 		currentPeriod := claims.ExpiresAt - time.Now().Unix()
 
 		if currentPeriod > tokenPeriod/5 {
-			log.Println("Token still in grace period")
+			jww.INFO.Println("Token still in grace period")
 			return nil
 		}
 
@@ -94,22 +120,35 @@ func (h AdalHandler) renewTokens() error {
 	return nil
 }
 
-func (h AdalHandler) tokenURL() string {
+func (h *AdalHandler) tokenURL() string {
 
-	return fmt.Sprintf("%s/%s/oauth2/token", h.authServer, h.tenantID)
+	return fmt.Sprintf("%s/oauth2/token", h.getAuthEndpoint())
 }
 
-func (h AdalHandler) OpenLoginProvider() error {
-	params := url.Values{}
+func (h *AdalHandler) getAuthEndpoint() string {
+	if h.o2o.TenantID == "" {
+		return h.o2o.AuthServer
+	}
+	return fmt.Sprintf("%s/%s", h.o2o.AuthServer, h.o2o.TenantID)
+}
+
+func (h *AdalHandler) LoginProviderURL() (string, error) {
+	u, err := url.Parse(fmt.Sprintf("%s/oauth2/authorize", h.getAuthEndpoint()))
+	if err != nil {
+		return "", err
+	}
+	jww.DEBUG.Println("LoginProvider at:", u)
+	params := u.Query()
 
 	params.Set("redirect_uri", h.appRedirect)
-	params.Set("client_id", h.clientID)
+	params.Set("client_id", h.o2o.ClientID)
 	params.Set("response_type", "code")
 	params.Set("state", "none")
 	params.Set("code_challenge", h.codeChallenge)
-	loginURL := fmt.Sprintf("%s/%s/oauth2/authorize?%s", h.authServer, h.tenantID, params.Encode())
-	browser.OpenURL(loginURL)
-	return nil
+
+	u.RawQuery = params.Encode()
+	return u.String(), nil
+
 }
 
 func CodeFromURL(callbackURL, scheme string) (string, error) {
@@ -128,15 +167,15 @@ func CodeFromURL(callbackURL, scheme string) (string, error) {
 	return code, nil
 }
 
-func (h AdalHandler) CodeFromURL(callbackURL string) (string, error) {
+func (h *AdalHandler) CodeFromURL(callbackURL string) (string, error) {
 	return CodeFromURL(callbackURL, h.handleScheme)
 }
 
-func (h AdalHandler) updateTokens(code, grant string) error {
+func (h *AdalHandler) updateTokens(code, grant string) error {
 
 	params := url.Values{}
-	params.Set("client_id", h.clientID)
-	params.Set("client_secret", h.clientSecret)
+	params.Set("client_id", h.o2o.ClientID)
+	params.Set("client_secret", h.o2o.ClientSecret)
 	params.Set("grant_type", grant)
 
 	if grant == authGrant {
@@ -146,7 +185,7 @@ func (h AdalHandler) updateTokens(code, grant string) error {
 	} else if grant == refreshGrant {
 		params.Set("refresh_token", code)
 	}
-	params.Set("resource", h.clientID)
+	params.Set("resource", h.o2o.ClientID)
 	body := bytes.NewBufferString(params.Encode())
 
 	tokenURL := h.tokenURL()
@@ -189,7 +228,7 @@ func (h AdalHandler) updateTokens(code, grant string) error {
 	return nil
 }
 
-func (h AdalHandler) getValidAccessToken() (string, error) {
+func (h *AdalHandler) getValidAccessToken() (string, error) {
 	a, err := h.store.GetToken(storage.AccessToken)
 	if err != nil {
 		return "", err
@@ -204,7 +243,7 @@ func (h AdalHandler) getValidAccessToken() (string, error) {
 	return "", err
 }
 
-func (h AdalHandler) GetAccessToken() (string, error) {
+func (h *AdalHandler) GetAccessToken() (string, error) {
 
 	a, err := h.store.GetToken(storage.AccessToken)
 	if err != nil {
@@ -213,7 +252,7 @@ func (h AdalHandler) GetAccessToken() (string, error) {
 
 	return a, nil
 }
-func (h AdalHandler) UpdateFromRedirect(redirect *url.URL) error {
+func (h *AdalHandler) UpdateFromRedirect(redirect *url.URL) error {
 
 	// TODO: Validate state/nonce
 	// Decode to authorize code
@@ -233,7 +272,7 @@ func (h AdalHandler) UpdateFromRedirect(redirect *url.URL) error {
 	return nil
 }
 
-func (h AdalHandler) UpdateFromCode(code string) error {
+func (h *AdalHandler) UpdateFromCode(code string) error {
 	h.mut.Lock()
 	defer h.mut.Unlock()
 	return nil

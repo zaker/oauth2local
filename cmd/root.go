@@ -1,11 +1,11 @@
 package cmd
 
 import (
-	"fmt"
 	"os"
 
 	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
+	jww "github.com/spf13/jwalterweatherman"
 	"github.com/spf13/viper"
 )
 
@@ -21,7 +21,7 @@ var rootCmd = &cobra.Command{
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
 	if err := rootCmd.Execute(); err != nil {
-		fmt.Println(err)
+		jww.ERROR.Println(err)
 		os.Exit(1)
 	}
 }
@@ -44,6 +44,7 @@ func initDefaultConfig() {
 	viper.SetDefault("TenantID", "common")
 	viper.SetDefault("ClientID", "")
 	viper.SetDefault("ClientSecret", "")
+	viper.SetDefault("CustomScheme", "loc-auth")
 }
 
 // initConfig reads in config file and ENV variables if set.
@@ -55,7 +56,7 @@ func initConfig() {
 		// Find home directory.
 		home, err := homedir.Dir()
 		if err != nil {
-			fmt.Println(err)
+			jww.ERROR.Println(err)
 			os.Exit(1)
 		}
 
@@ -68,7 +69,7 @@ func initConfig() {
 
 	// If a config file is found, read it in.
 	if err := viper.ReadInConfig(); err != nil {
-		fmt.Println(err)
+		jww.ERROR.Println(err)
 	}
 
 }

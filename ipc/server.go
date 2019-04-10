@@ -3,11 +3,11 @@ package ipc
 import (
 	"context"
 	"fmt"
-	"log"
 	"net/url"
 
 	pb "github.com/equinor/oauth2local/ipc/localauth"
 	"github.com/equinor/oauth2local/oauth2"
+	jww "github.com/spf13/jwalterweatherman"
 	"google.golang.org/grpc"
 )
 
@@ -23,7 +23,7 @@ func (s *Server) GetAccessToken(ctx context.Context, _ *pb.Empty) (*pb.ATRespons
 
 	a, err := s.oauthHandler.GetAccessToken()
 	if err != nil {
-		log.Println("Error:", err)
+		jww.ERROR.Println("Error:", err)
 		return nil, err
 	}
 	return &pb.ATResponse{AccessToken: a}, nil

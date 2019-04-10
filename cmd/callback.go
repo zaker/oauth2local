@@ -7,6 +7,7 @@ import (
 
 	"github.com/equinor/oauth2local/ipc"
 	"github.com/spf13/cobra"
+	jww "github.com/spf13/jwalterweatherman"
 )
 
 var breakB bool
@@ -20,12 +21,12 @@ var callbackCmd = &cobra.Command{
 		err := sendCallback(args)
 		if err != nil {
 
-			fmt.Println("Error...", err)
+			jww.ERROR.Println("Error...", err)
 			bufio.NewReader(os.Stdin).ReadBytes('\n')
 			return
 		}
 		if breakB {
-			fmt.Println("sent calback", args)
+			jww.INFO.Println("sent calback", args)
 			bufio.NewReader(os.Stdin).ReadBytes('\n')
 		}
 	},

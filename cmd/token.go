@@ -1,12 +1,11 @@
 package cmd
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/equinor/oauth2local/ipc"
-
 	"github.com/spf13/cobra"
+	jww "github.com/spf13/jwalterweatherman"
 )
 
 var tokenCmd = &cobra.Command{
@@ -25,7 +24,7 @@ var tokenCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
-		fmt.Println(a)
+		jww.INFO.Println(a)
 	},
 }
 
