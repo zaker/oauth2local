@@ -1,8 +1,7 @@
 package register
 
 import (
-	"log"
-
+	jww "github.com/spf13/jwalterweatherman"
 	"golang.org/x/sys/windows/registry"
 )
 
@@ -34,17 +33,17 @@ func RegMe(urlScheme, locauthPath string) error {
 		return err
 	}
 	if registered {
-		log.Printf("App %s is registered as url handler for %s ", locauthPath, urlScheme)
+		jww.INFO.Printf("App %s is registered as url handler for %s ", locauthPath, urlScheme)
 		return nil
 	}
-	log.Println("Creating key " + urlScheme)
+	jww.INFO.Println("Creating key " + urlScheme)
 	k, _, err := registry.CreateKey(registry.CLASSES_ROOT, urlScheme, registry.WRITE)
 	if err != nil {
 		return err
 	}
 	defer k.Close()
 
-	log.Println("Setting default value")
+	jww.INFO.Println("Setting default value")
 	err = k.SetStringValue("", "URL:Handles aad tokens")
 	if err != nil {
 		return err
@@ -54,21 +53,21 @@ func RegMe(urlScheme, locauthPath string) error {
 		return err
 	}
 
-	log.Println("Creating key", urlScheme+`\shell`)
+	jww.INFO.Println("Creating key", urlScheme+`\shell`)
 	sk, _, err := registry.CreateKey(registry.CLASSES_ROOT, urlScheme+`\shell`, registry.WRITE)
 	if err != nil {
 		return err
 	}
 	defer sk.Close()
 
-	log.Println("Creating key", urlScheme+`\shell\open`)
+	jww.INFO.Println("Creating key", urlScheme+`\shell\open`)
 	ok, _, err := registry.CreateKey(registry.CLASSES_ROOT, urlScheme+`\shell\open`, registry.WRITE)
 	if err != nil {
 		return err
 	}
 	ok.Close()
 
-	log.Println("Creating key", urlScheme+`\shell\open\command`)
+	jww.INFO.Println("Creating key", urlScheme+`\shell\open\command`)
 	ck, _, err := registry.CreateKey(registry.CLASSES_ROOT, urlScheme+`\shell\open\command`, registry.WRITE)
 	if err != nil {
 		return err

@@ -5,12 +5,13 @@
 An oauth client providing authenticated tokens to local processes.
 
 ```plain
+oauth2local is providing oauth2 authenticated tokens to local processes
+
 Usage:
   oauth2local [command]
 
 Available Commands:
   callback    Send callback url to sovereign
-  config      Shows the config settings
   help        Help about any command
   register    Register app as url handler for custom url
   serve       serve a local auth provider
@@ -19,6 +20,7 @@ Available Commands:
 Flags:
       --config string   config file (default is $HOME/.oauth2local.yaml)
   -h, --help            help for oauth2local
+      --verbose         log to console to console
 
 Use "oauth2local [command] --help" for more information about a command.
 ```

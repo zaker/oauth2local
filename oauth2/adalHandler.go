@@ -3,30 +3,32 @@ package oauth2
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
-	"log"
 	"net/http"
 	"net/url"
+	"strings"
+	"sync"
 	"time"
 
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/equinor/oauth2local/storage"
 	"github.com/google/uuid"
-	"github.com/pkg/browser"
-	"github.com/spf13/viper"
+	jww "github.com/spf13/jwalterweatherman"
 )
 
 type AdalHandler struct {
-	net           *http.Client
-	tenantID      string
+	client        *http.Client
+	o2o           Oauth2Settings
 	appRedirect   string
-	clientID      string
-	clientSecret  string
-	handleScheme  string
+	scheme        string
+	sessionState  string
 	codeChallenge string
 	store         storage.Storage
 	jwtParser     *jwt.Parser
 	ticker        *time.Ticker
+	mut           *sync.Mutex
+	renewer       func()
 }
 
 const (
@@ -34,32 +36,96 @@ const (
 	refreshGrant = "refresh_token"
 )
 
-func NewAdalHandler(store storage.Storage) (AdalHandler, error) {
-
-	h := AdalHandler{
-		net:           new(http.Client),
-		tenantID:      viper.GetString("TenantID"),
-		appRedirect:   viper.GetString("CustomScheme") + "://callback",
-		clientID:      viper.GetString("ClientID"),
-		clientSecret:  viper.GetString("ClientSecret"),
-		handleScheme:  viper.GetString("CustomScheme"),
-		codeChallenge: uuid.New().String() + "-" + uuid.New().String(),
-		store:         store,
-		jwtParser:     new(jwt.Parser),
-		ticker:        time.NewTicker(1 * time.Minute)}
-
-	go func() {
-		for range h.ticker.C {
-			err := h.renewTokens()
-			if err != nil {
-				log.Println("Couldn't renew token", err)
-			}
-		}
-	}()
-	return h, nil
+type Option interface {
+	apply(*AdalHandler) error
 }
 
-func (h AdalHandler) renewTokens() error {
+func generateCodeChallenge() string {
+	return uuid.New().String() + "-" + uuid.New().String()
+}
+
+func generateSessionState() string {
+	return uuid.New().String() + "-" + uuid.New().String()
+}
+func (h *AdalHandler) defaultRenewer() {
+	for range h.ticker.C {
+		err := h.renewTokens()
+		if err != nil {
+			jww.INFO.Println("Couldn't renew token", err)
+		}
+	}
+}
+
+func NewAdal(opts ...Option) (*AdalHandler, error) {
+
+	dopts := &AdalHandler{
+		client:        new(http.Client),
+		o2o:           Oauth2Settings{},
+		appRedirect:   "loc-auth://callback",
+		scheme:        "loc-auth",
+		sessionState:  generateSessionState(),
+		codeChallenge: generateCodeChallenge(),
+		store:         storage.Memory(),
+		jwtParser:     new(jwt.Parser),
+		ticker:        time.NewTicker(1 * time.Minute),
+		mut:           new(sync.Mutex)}
+
+	dopts.renewer = dopts.defaultRenewer
+
+	for _, opt := range opts {
+		opt.apply(dopts)
+	}
+
+	if !dopts.o2o.Valid() {
+		return nil, fmt.Errorf("Oauth2 Settings is not valid")
+	}
+
+	if dopts.renewer == nil {
+		return nil, fmt.Errorf("No acces token renewer defined")
+	}
+
+	go dopts.renewer()
+	return dopts, nil
+}
+
+func WithOauth2Settings(o2o Oauth2Settings) Option {
+	return newFuncOption(func(h *AdalHandler) error {
+		h.o2o = o2o
+		h.o2o.AuthServer = strings.TrimRight(h.o2o.AuthServer, "/")
+		h.o2o.AuthServer = strings.TrimSpace(h.o2o.AuthServer)
+		return nil
+	})
+}
+
+func WithState(state string) Option {
+	return newFuncOption(func(h *AdalHandler) error {
+		h.sessionState = state
+		return nil
+	})
+}
+
+func WithRenewer(renewer func()) Option {
+	return newFuncOption(func(h *AdalHandler) error {
+		h.renewer = renewer
+		return nil
+	})
+}
+
+func WithClient(client *http.Client) Option {
+	return newFuncOption(func(h *AdalHandler) error {
+		h.client = client
+		return nil
+	})
+}
+
+func WithStore(store storage.Storage) Option {
+	return newFuncOption(func(h *AdalHandler) error {
+		h.store = store
+		return nil
+	})
+}
+
+func (h *AdalHandler) renewTokens() error {
 
 	a, err := h.store.GetToken(storage.AccessToken)
 	if err != nil {
@@ -74,16 +140,17 @@ func (h AdalHandler) renewTokens() error {
 		currentPeriod := claims.ExpiresAt - time.Now().Unix()
 
 		if currentPeriod > tokenPeriod/5 {
-			log.Println("Token still in grace period")
+			jww.INFO.Println("Token still in grace period")
 			return nil
 		}
-
+		jww.INFO.Println("Token is out grace period")
 	}
-
+	jww.DEBUG.Println("Fetching refresh token from store")
 	r, err := h.store.GetToken(storage.RefreshToken)
 	if err != nil {
 		return err
 	}
+	jww.INFO.Println("Fetching refresh token from store")
 	err = h.updateTokens(r, refreshGrant)
 	if err != nil {
 		return err
@@ -91,49 +158,42 @@ func (h AdalHandler) renewTokens() error {
 	return nil
 }
 
-func tokenURL(tenant string) string {
+func (h *AdalHandler) tokenURL() string {
 
-	return fmt.Sprintf("https://login.microsoftonline.com/%s/oauth2/token", tenant)
+	return fmt.Sprintf("%s/oauth2/token", h.getAuthEndpoint())
 }
 
-func (h AdalHandler) OpenLoginProvider() error {
-	params := url.Values{}
-
-	params.Set("redirect_uri", h.appRedirect)
-	params.Set("client_id", h.clientID)
-	params.Set("response_type", "code")
-	params.Set("state", "none")
-	params.Set("code_challenge", h.codeChallenge)
-	loginURL := fmt.Sprintf("https://login.microsoftonline.com/%s/oauth2/authorize?%s", h.tenantID, params.Encode())
-	browser.OpenURL(loginURL)
-	return nil
+func (h *AdalHandler) getAuthEndpoint() string {
+	if h.o2o.TenantID == "" {
+		return h.o2o.AuthServer
+	}
+	return fmt.Sprintf("%s/%s", h.o2o.AuthServer, h.o2o.TenantID)
 }
 
-func CodeFromURL(callbackURL, scheme string) (string, error) {
-	u, err := url.Parse(callbackURL)
+func (h *AdalHandler) LoginProviderURL() (string, error) {
+	u, err := url.Parse(fmt.Sprintf("%s/oauth2/authorize", h.getAuthEndpoint()))
 	if err != nil {
 		return "", err
 	}
-
-	if u.Scheme != scheme {
-		return "", fmt.Errorf("App doesn't handle scheme: %s", u.Scheme)
-
-	}
+	jww.DEBUG.Println("LoginProvider at:", u)
 	params := u.Query()
-	code := params.Get("code")
 
-	return code, nil
+	params.Set("redirect_uri", h.appRedirect)
+	params.Set("client_id", h.o2o.ClientID)
+	params.Set("response_type", "code")
+	params.Set("state", h.sessionState)
+	params.Set("code_challenge", h.codeChallenge)
+
+	u.RawQuery = params.Encode()
+	return u.String(), nil
+
 }
 
-func (h AdalHandler) CodeFromURL(callbackURL string) (string, error) {
-	return CodeFromURL(callbackURL, h.handleScheme)
-}
-
-func (h AdalHandler) updateTokens(code, grant string) error {
+func (h *AdalHandler) updateTokens(code, grant string) error {
 
 	params := url.Values{}
-	params.Set("client_id", h.clientID)
-	params.Set("client_secret", h.clientSecret)
+	params.Set("client_id", h.o2o.ClientID)
+	params.Set("client_secret", h.o2o.ClientSecret)
 	params.Set("grant_type", grant)
 
 	if grant == authGrant {
@@ -143,11 +203,11 @@ func (h AdalHandler) updateTokens(code, grant string) error {
 	} else if grant == refreshGrant {
 		params.Set("refresh_token", code)
 	}
-	params.Set("resource", h.clientID)
+	params.Set("resource", h.o2o.ClientID)
 	body := bytes.NewBufferString(params.Encode())
 
-	tokenURL := tokenURL(h.tenantID)
-	resp, err := h.net.Post(tokenURL, "application/x-www-form-urlencoded", body)
+	tokenURL := h.tokenURL()
+	resp, err := h.client.Post(tokenURL, "application/x-www-form-urlencoded", body)
 	if err != nil {
 		return fmt.Errorf("Error posting to token url %s: %s ", tokenURL, err)
 	}
@@ -186,7 +246,7 @@ func (h AdalHandler) updateTokens(code, grant string) error {
 	return nil
 }
 
-func (h AdalHandler) getValidAccessToken() (string, error) {
+func (h *AdalHandler) getValidAccessToken() (string, error) {
 	a, err := h.store.GetToken(storage.AccessToken)
 	if err != nil {
 		return "", err
@@ -201,7 +261,7 @@ func (h AdalHandler) getValidAccessToken() (string, error) {
 	return "", err
 }
 
-func (h AdalHandler) GetAccessToken() (string, error) {
+func (h *AdalHandler) GetAccessToken() (string, error) {
 
 	a, err := h.store.GetToken(storage.AccessToken)
 	if err != nil {
@@ -210,16 +270,21 @@ func (h AdalHandler) GetAccessToken() (string, error) {
 
 	return a, nil
 }
-func (h AdalHandler) UpdateFromRedirect(redirect *url.URL) error {
+func (h *AdalHandler) UpdateFromRedirect(redirect *url.URL) error {
 
-	// TODO: Validate state/nonce
-	// Decode to authorize code
-	c, err := h.CodeFromURL(redirect.String())
-	if err != nil {
-		return err
+	rp := DecodeRedirect(redirect)
+	if rp.state != h.sessionState {
+		return errors.New("Not a valid state")
 	}
 
-	err = h.updateTokens(c, authGrant)
+	if rp.scheme != h.scheme {
+		return errors.New("Not a valid scheme")
+	}
+
+	h.mut.Lock()
+	defer h.mut.Unlock()
+
+	err := h.updateTokens(rp.code, authGrant)
 	if err != nil {
 		return err
 	}
@@ -227,7 +292,8 @@ func (h AdalHandler) UpdateFromRedirect(redirect *url.URL) error {
 	return nil
 }
 
-func (h AdalHandler) UpdateFromCode(code string) error {
-
-	return nil
+func (h *AdalHandler) UpdateFromCode(code string) error {
+	h.mut.Lock()
+	defer h.mut.Unlock()
+	return fmt.Errorf("Not implemented")
 }

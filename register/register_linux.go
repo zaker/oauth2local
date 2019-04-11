@@ -17,8 +17,6 @@ StartupNotify=false
 MimeType=x-scheme-handler/%s;
 NoDisplay=true`
 
-const xdgRegisterCommand = "xdg-mime default auth2local.desktop x-scheme-handler/%s"
-
 func regExist(newContent string) bool {
 	content, err := ioutil.ReadFile("testdata/hello")
 	if err != nil {
@@ -44,7 +42,11 @@ func RegMe(urlScheme, locauthPath string) error {
 	if err != nil {
 		return err
 	}
-	cmd := exec.Command("xdg-mime", "default", "auth2local.desktop", "x-scheme-handler/"+urlScheme)
+	cmd := exec.Command(
+		"xdg-mime",
+		"default",
+		"auth2local.desktop",
+		"x-scheme-handler/"+urlScheme)
 
 	err = cmd.Run()
 	if err != nil {
