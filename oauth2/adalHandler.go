@@ -143,13 +143,14 @@ func (h *AdalHandler) renewTokens() error {
 			jww.INFO.Println("Token still in grace period")
 			return nil
 		}
-
+		jww.INFO.Println("Token is out grace period")
 	}
-
+	jww.DEBUG.Println("Fetching refresh token from store")
 	r, err := h.store.GetToken(storage.RefreshToken)
 	if err != nil {
 		return err
 	}
+	jww.INFO.Println("Fetching refresh token from store")
 	err = h.updateTokens(r, refreshGrant)
 	if err != nil {
 		return err

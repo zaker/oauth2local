@@ -43,7 +43,7 @@ func TestAdalHandler_UpdateFromRedirect(t *testing.T) {
 		redirect *url.URL
 	}
 
-	testCli := NewTestClient(func(req *http.Request) *http.Response {
+	testTokenCli := NewTestClient(func(req *http.Request) *http.Response {
 		// Test request parameters
 		wantURL := "https://example.com/comon/oauth2/token"
 		gotURL := req.URL.String()
@@ -61,17 +61,18 @@ func TestAdalHandler_UpdateFromRedirect(t *testing.T) {
 	testStore := storage.Memory()
 	h, err := NewAdal(
 		WithOauth2Settings(testSettings),
-		WithClient(testCli),
+		WithClient(testTokenCli),
 		WithState("none"),
 		WithStore(testStore),
 	)
 
 	if err != nil {
-		t.Errorf("Failed declaring new handler %v", err)
+		t.Errorf("Failed creating handler %v", err)
 	}
 
 	redir, err := url.Parse("loc-auth://callback?state=none")
 	failScheme, err := url.Parse("loki-auth://callback?state=none")
+	noState, err := url.Parse("loki-auth://callback")
 	if err != nil {
 		t.Errorf("Couldn't parse url %v", err)
 	}
@@ -83,6 +84,7 @@ func TestAdalHandler_UpdateFromRedirect(t *testing.T) {
 	}{
 		{name: "Update tokens", h: h, args: args{redir}, wantErr: false},
 		{"Fail update ", h, args{failScheme}, true},
+		{"No state in return", h, args{noState}, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -104,13 +106,34 @@ func TestAdalHandler_UpdateFromRedirect(t *testing.T) {
 }
 
 func TestAdalHandler_GetAccessToken(t *testing.T) {
+
+	errCli := NewTestClient(func(req *http.Request) *http.Response {
+		t.Error("Shouldn't do a http request")
+
+		return &http.Response{
+			StatusCode: 404,
+		}
+	})
+	testStore := storage.Memory()
+	testStore.SetToken(storage.AccessToken, "accessToken")
+	h, err := NewAdal(
+		WithOauth2Settings(testSettings),
+		WithClient(errCli),
+		WithState("none"),
+		WithStore(testStore),
+	)
+
+	if err != nil {
+		t.Errorf("Failed creating handler %v", err)
+	}
+
 	tests := []struct {
 		name    string
-		h       AdalHandler
+		h       Handler
 		want    string
 		wantErr bool
 	}{
-		// TODO: Add test cases.
+		{"Fetch token from internal store", h, "accessToken", false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -132,7 +155,7 @@ func TestAdalHandler_UpdateFromCode(t *testing.T) {
 	}
 	tests := []struct {
 		name    string
-		h       AdalHandler
+		h       Handler
 		args    args
 		wantErr bool
 	}{
