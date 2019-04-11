@@ -150,6 +150,23 @@ func TestAdalHandler_GetAccessToken(t *testing.T) {
 }
 
 func TestAdalHandler_UpdateFromCode(t *testing.T) {
+	errCli := NewTestClient(func(req *http.Request) *http.Response {
+		t.Error("Shouldn't do a http request")
+
+		return &http.Response{
+			StatusCode: 404,
+		}
+	})
+	h, err := NewAdal(
+		WithOauth2Settings(testSettings),
+		WithClient(errCli),
+		WithState("test"),
+	)
+
+	if err != nil {
+		t.Errorf("Failed creating handler %v", err)
+	}
+
 	type args struct {
 		code string
 	}
@@ -159,7 +176,7 @@ func TestAdalHandler_UpdateFromCode(t *testing.T) {
 		args    args
 		wantErr bool
 	}{
-		// TODO: Add test cases.
+		{"Not implemented", h, args{""}, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

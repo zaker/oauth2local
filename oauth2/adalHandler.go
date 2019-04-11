@@ -295,5 +295,5 @@ func (h *AdalHandler) UpdateFromRedirect(redirect *url.URL) error {
 func (h *AdalHandler) UpdateFromCode(code string) error {
 	h.mut.Lock()
 	defer h.mut.Unlock()
-	return nil
+	return fmt.Errorf("Not implemented")
 }
