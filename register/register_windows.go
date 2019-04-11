@@ -1,8 +1,6 @@
 package register
 
 import (
-	"log"
-
 	jww "github.com/spf13/jwalterweatherman"
 	"golang.org/x/sys/windows/registry"
 )
@@ -35,7 +33,7 @@ func RegMe(urlScheme, locauthPath string) error {
 		return err
 	}
 	if registered {
-		log.Printf("App %s is registered as url handler for %s ", locauthPath, urlScheme)
+		jww.INFO.Printf("App %s is registered as url handler for %s ", locauthPath, urlScheme)
 		return nil
 	}
 	jww.INFO.Println("Creating key " + urlScheme)

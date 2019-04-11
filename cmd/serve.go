@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"log"
 	"os"
 
 	"github.com/pkg/browser"
@@ -42,7 +41,7 @@ func runServe(cmd *cobra.Command, args []string) {
 			ClientSecret: viper.GetString("ClientSecret"),
 		}))
 	if err != nil {
-		log.Printf("Error with oauth client: %v", err)
+		jww.ERROR.Printf("Error with oauth client: %v", err)
 		return
 	}
 
@@ -50,7 +49,7 @@ func runServe(cmd *cobra.Command, args []string) {
 
 	lpu, err := oauthHandler.LoginProviderURL()
 	if err != nil {
-		log.Printf("Login provider url isn't an url: %v", err)
+		jww.ERROR.Printf("Login provider url isn't an url: %v", err)
 		return
 	}
 

@@ -2,6 +2,7 @@ package oauth2
 
 import (
 	"bytes"
+	"encoding/json"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -48,12 +49,23 @@ func TestAdalHandler_UpdateFromRedirect(t *testing.T) {
 		wantURL := "https://example.com/comon/oauth2/token"
 		gotURL := req.URL.String()
 		if gotURL != wantURL {
-			t.Errorf("Not creating the correct token endpoint: got = %v , want = %v", gotURL, wantURL)
+			t.Errorf(
+				"Not creating the correct token endpoint: got = %v , want = %v",
+				gotURL, wantURL)
+		}
+
+		tr := TokenResponse{
+			"newAccessToken",
+			"newIdToken",
+			"newRefreshToken"}
+		b, err := json.Marshal(tr)
+		if err != nil {
+			t.Errorf("Marshaling token response: %v", err)
 		}
 		return &http.Response{
 			StatusCode: 200,
 			// Send response to be tested
-			Body: ioutil.NopCloser(bytes.NewBufferString(`{"access_token":"newAccessToken","id_token":"newIdToken","refresh_token":"newRefreshToken"}`)),
+			Body: ioutil.NopCloser(bytes.NewBuffer(b)),
 			// Must be set to non-nil value or it panics
 			Header: make(http.Header),
 		}
