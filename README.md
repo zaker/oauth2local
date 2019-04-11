@@ -1,3 +1,5 @@
+[![Build Status](https://dev.azure.com/lambdaville/oauth2local/_apis/build/status/equinor.oauth2local?branchName=master)](https://dev.azure.com/lambdaville/oauth2local/_build/latest?definitionId=1&branchName=master)
+
 # oauth2local
 
 An oauth client providing authenticated tokens to local processes.
