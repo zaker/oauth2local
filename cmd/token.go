@@ -1,6 +1,6 @@
 package cmd
-
 import (
+	"fmt"
 	"os"
 
 	"github.com/equinor/oauth2local/ipc"
@@ -26,7 +26,7 @@ var tokenCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		jww.INFO.Println(a)
+		fmt.Println(a)
 	},
 }
 

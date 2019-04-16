@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strings"
@@ -207,13 +208,18 @@ func (h *AdalHandler) updateTokens(code, grant string) error {
 	body := bytes.NewBufferString(params.Encode())
 
 	tokenURL := h.tokenURL()
+	jww.DEBUG.Println("Getting token from:", tokenURL)
 	resp, err := h.client.Post(tokenURL, "application/x-www-form-urlencoded", body)
 	if err != nil {
 		return fmt.Errorf("Error posting to token url %s: %s ", tokenURL, err)
 	}
 	if resp.StatusCode != 200 {
-
-		return fmt.Errorf("Did not receive token: %v", resp.Status)
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return fmt.Errorf("Did not receive token: %v - No body", resp.Status)
+		}
+		bodyString := string(body)
+		return fmt.Errorf("Did not receive token: %v - %s", resp.Status, bodyString)
 
 	}
 
@@ -244,21 +250,6 @@ func (h *AdalHandler) updateTokens(code, grant string) error {
 		}
 	}
 	return nil
-}
-
-func (h *AdalHandler) getValidAccessToken() (string, error) {
-	a, err := h.store.GetToken(storage.AccessToken)
-	if err != nil {
-		return "", err
-	}
-
-	token, _, err := h.jwtParser.ParseUnverified(a, &jwt.StandardClaims{})
-	//Reissue to authorize if old
-	if _, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-		return a, nil
-	}
-
-	return "", err
 }
 
 func (h *AdalHandler) GetAccessToken() (string, error) {

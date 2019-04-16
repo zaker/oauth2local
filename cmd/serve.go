@@ -32,13 +32,17 @@ func runServe(cmd *cobra.Command, args []string) {
 		os.Exit(1)
 	}
 
-	oauthHandler, err := oauth2.NewAdal(oauth2.WithOauth2Settings(
+	opts := []oauth2.Option{oauth2.WithOauth2Settings(
 		oauth2.Oauth2Settings{
 			AuthServer:   viper.GetString("Authserver"),
 			TenantID:     viper.GetString("TenantID"),
 			ClientID:     viper.GetString("ClientID"),
 			ClientSecret: viper.GetString("ClientSecret"),
-		}))
+		})}
+	if viper.GetBool("IgnoreStateCheck") {
+		opts = append(opts, oauth2.WithState("none"))
+	}
+	oauthHandler, err := oauth2.NewAdal(opts...)
 	if err != nil {
 		jww.ERROR.Printf("Error with oauth client: %v", err)
 		os.Exit(1)
