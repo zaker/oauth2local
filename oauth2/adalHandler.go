@@ -209,12 +209,13 @@ func (h *AdalHandler) updateTokens(code, grant string) error {
 
 	tokenURL := h.tokenURL()
 	jww.DEBUG.Println("Getting token from:", tokenURL)
-	resp, err := h.client.Post(tokenURL, "application/x-www-form-urlencoded", body)
+	resp, err := http.Post(tokenURL, "application/x-www-form-urlencoded", body)
 	if err != nil {
 		return fmt.Errorf("Error posting to token url %s: %s ", tokenURL, err)
 	}
 	if resp.StatusCode != 200 {
 		body, err := ioutil.ReadAll(resp.Body)
+		resp.Body.Close()
 		if err != nil {
 			return fmt.Errorf("Did not receive token: %v - No body", resp.Status)
 		}
@@ -226,6 +227,11 @@ func (h *AdalHandler) updateTokens(code, grant string) error {
 	decoder := json.NewDecoder(resp.Body)
 	var dat map[string]interface{}
 	err = decoder.Decode(&dat)
+	if err != nil {
+		return err
+	}
+
+	err = resp.Body.Close()
 	if err != nil {
 		return err
 	}
@@ -265,11 +271,11 @@ func (h *AdalHandler) UpdateFromRedirect(redirect *url.URL) error {
 
 	rp := DecodeRedirect(redirect)
 	if rp.state != h.sessionState {
-		return errors.New("Not a valid state")
+		return errors.New("Invalid state in redirect")
 	}
 
 	if rp.scheme != h.scheme {
-		return errors.New("Not a valid scheme")
+		return errors.New("Invalid scheme in redirect")
 	}
 
 	h.mut.Lock()
