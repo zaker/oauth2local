@@ -133,7 +133,7 @@ func (h *AdalHandler) renewTokens() error {
 	}
 
 	token, _, err := h.jwtParser.ParseUnverified(a, &jwt.StandardClaims{})
-	//Reissue to authorize if old
+
 	if claims, ok := token.Claims.(*jwt.StandardClaims); ok {
 
 		tokenPeriod := claims.ExpiresAt - claims.IssuedAt
