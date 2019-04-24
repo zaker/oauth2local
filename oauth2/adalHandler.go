@@ -1,10 +1,10 @@
 package oauth2
 
 import (
-	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strings"
@@ -133,7 +133,7 @@ func (h *AdalHandler) renewTokens() error {
 	}
 
 	token, _, err := h.jwtParser.ParseUnverified(a, &jwt.StandardClaims{})
-	//Reissue to authorize if old
+
 	if claims, ok := token.Claims.(*jwt.StandardClaims); ok {
 
 		tokenPeriod := claims.ExpiresAt - claims.IssuedAt
@@ -190,7 +190,7 @@ func (h *AdalHandler) LoginProviderURL() (string, error) {
 }
 
 func (h *AdalHandler) updateTokens(code, grant string) error {
-
+	defer h.client.CloseIdleConnections()
 	params := url.Values{}
 	params.Set("client_id", h.o2o.ClientID)
 	params.Set("client_secret", h.o2o.ClientSecret)
@@ -204,22 +204,32 @@ func (h *AdalHandler) updateTokens(code, grant string) error {
 		params.Set("refresh_token", code)
 	}
 	params.Set("resource", h.o2o.ClientID)
-	body := bytes.NewBufferString(params.Encode())
 
 	tokenURL := h.tokenURL()
-	resp, err := h.client.Post(tokenURL, "application/x-www-form-urlencoded", body)
+	jww.DEBUG.Println("Getting token from:", tokenURL)
+	resp, err := h.client.PostForm(tokenURL, params)
 	if err != nil {
 		return fmt.Errorf("Error posting to token url %s: %s ", tokenURL, err)
 	}
 	if resp.StatusCode != 200 {
-
-		return fmt.Errorf("Did not receive token: %v", resp.Status)
+		body, err := ioutil.ReadAll(resp.Body)
+		resp.Body.Close()
+		if err != nil {
+			return fmt.Errorf("Did not receive token: %v - No body", resp.Status)
+		}
+		bodyString := string(body)
+		return fmt.Errorf("Did not receive token: %v - %s", resp.Status, bodyString)
 
 	}
 
 	decoder := json.NewDecoder(resp.Body)
 	var dat map[string]interface{}
 	err = decoder.Decode(&dat)
+	if err != nil {
+		return err
+	}
+
+	err = resp.Body.Close()
 	if err != nil {
 		return err
 	}
@@ -246,21 +256,6 @@ func (h *AdalHandler) updateTokens(code, grant string) error {
 	return nil
 }
 
-func (h *AdalHandler) getValidAccessToken() (string, error) {
-	a, err := h.store.GetToken(storage.AccessToken)
-	if err != nil {
-		return "", err
-	}
-
-	token, _, err := h.jwtParser.ParseUnverified(a, &jwt.StandardClaims{})
-	//Reissue to authorize if old
-	if _, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-		return a, nil
-	}
-
-	return "", err
-}
-
 func (h *AdalHandler) GetAccessToken() (string, error) {
 
 	a, err := h.store.GetToken(storage.AccessToken)
@@ -274,11 +269,11 @@ func (h *AdalHandler) UpdateFromRedirect(redirect *url.URL) error {
 
 	rp := DecodeRedirect(redirect)
 	if rp.state != h.sessionState {
-		return errors.New("Not a valid state")
+		return errors.New("Invalid state in redirect")
 	}
 
 	if rp.scheme != h.scheme {
-		return errors.New("Not a valid scheme")
+		return errors.New("Invalid scheme in redirect")
 	}
 
 	h.mut.Lock()

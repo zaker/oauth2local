@@ -6,6 +6,7 @@ import (
 	"time"
 
 	pb "github.com/equinor/oauth2local/ipc/localauth"
+	jww "github.com/spf13/jwalterweatherman"
 	"google.golang.org/grpc"
 )
 
@@ -54,6 +55,7 @@ func (c *Client) SendCallback(callbackURL string) error {
 	if r == nil {
 		return fmt.Errorf("No message received")
 	}
+	jww.DEBUG.Println("Sent callback:", callbackURL)
 	return nil
 }
 
@@ -66,5 +68,6 @@ func (c *Client) GetAccessToken() (string, error) {
 	if err != nil {
 		return "", err
 	}
+	jww.DEBUG.Println("Got access token")
 	return r.AccessToken, nil
 }

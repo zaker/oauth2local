@@ -1,0 +1,10 @@
+version: '3.7'
+services:
+  integration:
+    build:
+      context: '.'
+    depends_on:
+      - mock-auth
+  mock-auth:
+    image: 'lambdaville/no-factor-auth:v0.0.4'
+    restart: unless-stopped

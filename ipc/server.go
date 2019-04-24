@@ -1,5 +1,4 @@
 package ipc
-
 import (
 	"context"
 	"fmt"
@@ -20,7 +19,7 @@ func NewServer(oauthHandler oauth2.Handler) (s *Server) {
 }
 
 func (s *Server) GetAccessToken(ctx context.Context, _ *pb.Empty) (*pb.ATResponse, error) {
-
+	jww.DEBUG.Println("Get access token")
 	a, err := s.oauthHandler.GetAccessToken()
 	if err != nil {
 		jww.ERROR.Println("Error:", err)
@@ -30,18 +29,17 @@ func (s *Server) GetAccessToken(ctx context.Context, _ *pb.Empty) (*pb.ATRespons
 }
 
 func (s *Server) Callback(ctx context.Context, cb *pb.CBRequest) (*pb.Empty, error) {
+	jww.DEBUG.Println("Callback from provider: ", cb.Url)
+	rURL, err := url.Parse(cb.Url)
+	if err != nil {
+		return nil, err
+	}
+	err = s.oauthHandler.UpdateFromRedirect(rURL)
+	if err != nil {
+		return nil, err
+	}
 
-	rUrl, err := url.Parse(cb.Url)
-	if err != nil {
-		return nil, err
-	}
-	err = s.oauthHandler.UpdateFromRedirect(rUrl)
-	if err != nil {
-		return nil, err
-	}
-	// s.store.SetToken(storage.AuthorizationCode, c)
 	return &pb.Empty{}, nil
-
 }
 
 func (s *Server) Ping(ctx context.Context, _ *pb.Empty) (*pb.PingResponse, error) {

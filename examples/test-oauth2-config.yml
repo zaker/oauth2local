@@ -1,0 +1,5 @@
+AuthServer: 'http://mock-auth:8089'
+TenantID: 'common'
+ClientID: 'someClient'
+ClientSecret: 'notsecret'
+IgnoreStateCheck: true
