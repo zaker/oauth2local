@@ -1,7 +1,6 @@
 package oauth2
 
 import (
-	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -191,7 +190,7 @@ func (h *AdalHandler) LoginProviderURL() (string, error) {
 }
 
 func (h *AdalHandler) updateTokens(code, grant string) error {
-
+	defer h.client.CloseIdleConnections()
 	params := url.Values{}
 	params.Set("client_id", h.o2o.ClientID)
 	params.Set("client_secret", h.o2o.ClientSecret)
@@ -205,11 +204,10 @@ func (h *AdalHandler) updateTokens(code, grant string) error {
 		params.Set("refresh_token", code)
 	}
 	params.Set("resource", h.o2o.ClientID)
-	body := bytes.NewBufferString(params.Encode())
 
 	tokenURL := h.tokenURL()
 	jww.DEBUG.Println("Getting token from:", tokenURL)
-	resp, err := http.Post(tokenURL, "application/x-www-form-urlencoded", body)
+	resp, err := h.client.PostForm(tokenURL, params)
 	if err != nil {
 		return fmt.Errorf("Error posting to token url %s: %s ", tokenURL, err)
 	}
