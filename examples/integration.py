@@ -12,6 +12,7 @@ serverArgs = ["./oauth2local",
               "--config",
               "test-oauth2-config.yml",
               "serve"]
+print(serverArgs)
 callbackArgs = ["./oauth2local",
                 "--verbose",
                 "--config",
@@ -41,14 +42,17 @@ async def readline_and_kill(args, sf, cf, tf, ef):
     tf.close()
     ef.close()
     tokenCmd.wait()
+    exitCode = 1
     if tokenCmd.returncode == 0:
         print("Success")
+        exitCode = 0
     else:
         with open("token.log", "r") as logFile:
             log = logFile.read()
         print("Error", log)
     server.kill()
-    return await server.wait()  # wait for the child process to exit
+    await server.wait()  # wait for the child process to exit
+    return exitCode
 
 
 if sys.platform == "win32":

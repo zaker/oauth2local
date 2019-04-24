@@ -9,23 +9,11 @@ trigger:
 pool:
   vmImage: 'Ubuntu-16.04'
 
-variables:
-  modulePath: '$(GOPATH)/src/github.com/$(build.repository.name)' # Path to the module's code
-
 steps:
 - task: GoTool@0
   inputs:
     version: '1.12'
-  displayName: Installing go version
-- script: |
-    mkdir -p '$(GOPATH)/pkg'
-    mkdir -p '$(modulePath)'
-    shopt -s extglob
-    shopt -s dotglob
-    mv !(GOPATH) '$(modulePath)'
-    echo '##vso[task.prependpath]$(GOBIN)'
-    echo '##vso[task.prependpath]$(GOROOT)/bin'
-  displayName: 'Set up the Go workspace'
+  displayName: Installing go
 
 - script: |
     go version
@@ -35,9 +23,19 @@ steps:
         dep ensure
     fi
     go build -v .
-  workingDirectory: '$(modulePath)'
   displayName: 'Get dependencies, then build'
 
 - script: go test -v ./...
-  workingDirectory: '$(modulePath)'
-  displayName: 'Run tests'
+  displayName: 'Run unit tests'
+
+- script: go build -o examples/oauth2local
+  displayName: 'Building for integration tests'
+
+- task: DockerCompose@0
+  displayName: 'Run integration tests'
+  inputs:
+    containerregistrytype: 'Container Registry'
+    dockerComposeFile: 'examples/docker-compose.yml'
+    action: 'Run a Docker Compose command'
+    dockerComposeCommand: 'up --build --exit-code-from integration'
+    cwd: '$(System.DefaultWorkingDirectory)/examples'
