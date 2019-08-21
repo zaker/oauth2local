@@ -5,6 +5,7 @@ import (
 
 	"github.com/pkg/browser"
 
+	"github.com/equinor/oauth2local/config"
 	"github.com/equinor/oauth2local/ipc"
 	"github.com/equinor/oauth2local/oauth2"
 	"github.com/spf13/cobra"
@@ -27,7 +28,6 @@ func runServe(cmd *cobra.Command, args []string) {
 		os.Exit(1)
 	}
 
-	jww.INFO.Println("Using config file:", viper.ConfigFileUsed())
 	if ipc.HasSovereign() {
 		jww.INFO.Println("A server is already running")
 		os.Exit(1)
@@ -35,11 +35,11 @@ func runServe(cmd *cobra.Command, args []string) {
 
 	opts := []oauth2.Option{oauth2.WithOauth2Settings(
 		oauth2.Oauth2Settings{
-			AuthServer:   viper.GetString("Authserver"),
-			TenantID:     viper.GetString("TenantID"),
-			ClientID:     viper.GetString("ClientID"),
-			ClientSecret: viper.GetString("ClientSecret"),
-			ResourceID:   viper.GetString("ResourceID"),
+			AuthServer:   config.AuthServer(),
+			TenantID:     config.TenantID(),
+			ClientID:     config.ClientID(),
+			ClientSecret: config.ClientSecret(),
+			ResourceID:   config.ResourceID(),
 		})}
 	if viper.GetBool("IgnoreStateCheck") {
 		opts = append(opts, oauth2.WithState("none"))
