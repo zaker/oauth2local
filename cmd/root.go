@@ -3,6 +3,8 @@ package cmd
 import (
 	"os"
 
+	"github.com/equinor/oauth2local/config"
+
 	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
 	jww "github.com/spf13/jwalterweatherman"
@@ -51,6 +53,9 @@ func initConfig() {
 		jww.SetLogThreshold(jww.LevelTrace)
 		jww.SetStdoutThreshold(jww.LevelTrace)
 	}
+	jww.INFO.Println("Using config file:", viper.ConfigFileUsed())
+
+	config.SetDefaults()
 	viper.AutomaticEnv()
 
 	if err := viper.ReadInConfig(); err != nil {
