@@ -30,7 +30,7 @@ func runServe(cmd *cobra.Command, args []string) {
 
 	if ipc.HasSovereign() {
 		jww.INFO.Println("A server is already running")
-		os.Exit(1)
+		os.Exit(9)
 	}
 
 	opts := []oauth2.Option{oauth2.WithOauth2Settings(
