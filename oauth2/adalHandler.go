@@ -10,7 +10,7 @@ import (
 	"sync"
 	"time"
 
-	jwt "github.com/dgrijalva/jwt-go"
+	jwt "github.com/golang-jwt/jwt"
 	"github.com/equinor/oauth2local/oauth2/redirect"
 	"github.com/equinor/oauth2local/storage"
 	jww "github.com/spf13/jwalterweatherman"
