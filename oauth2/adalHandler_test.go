@@ -33,7 +33,7 @@ func (f RoundTripFunc) RoundTrip(req *http.Request) (*http.Response, error) {
 	return f(req), nil
 }
 
-//NewTestClient returns *http.Client with Transport replaced to avoid making real calls
+// NewTestClient returns *http.Client with Transport replaced to avoid making real calls
 func NewTestClient(fn RoundTripFunc) *http.Client {
 	return &http.Client{
 		Transport: RoundTripFunc(fn),
@@ -80,7 +80,7 @@ func TestAdalHandler_UpdateFromRedirect(t *testing.T) {
 	)
 
 	if err != nil {
-		t.Errorf("Failed creating handler %w", err)
+		t.Errorf("Failed creating handler %v", err)
 	}
 
 	tests := []struct {
@@ -124,7 +124,7 @@ func TestAdalHandler_GetAccessToken(t *testing.T) {
 	testStore := storage.Memory()
 	err := testStore.SetToken(storage.AccessToken, "accessToken")
 	if err != nil {
-		t.Errorf("Setting token failed %w", err)
+		t.Errorf("Setting token failed %v", err)
 	}
 	h, err := NewAdal(
 		WithOauth2Settings(testSettings),
@@ -134,7 +134,7 @@ func TestAdalHandler_GetAccessToken(t *testing.T) {
 	)
 
 	if err != nil {
-		t.Errorf("Failed creating handler %w", err)
+		t.Errorf("Failed creating handler %v", err)
 	}
 
 	tests := []struct {
