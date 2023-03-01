@@ -10,9 +10,9 @@ import (
 	"sync"
 	"time"
 
-	jwt "github.com/golang-jwt/jwt"
 	"github.com/equinor/oauth2local/oauth2/redirect"
 	"github.com/equinor/oauth2local/storage"
+	jwt "github.com/golang-jwt/jwt"
 	jww "github.com/spf13/jwalterweatherman"
 )
 
@@ -67,7 +67,7 @@ func NewMsal(opts ...Option) (*MsalHandler, error) {
 	}
 
 	if dopts.renewer == nil {
-		return nil, fmt.Errorf("No acces token renewer defined")
+		return nil, fmt.Errorf("no acces token renewer defined")
 	}
 
 	go dopts.renewer()
@@ -160,16 +160,16 @@ func (h *MsalHandler) updateTokens(code, grant string) error {
 	jww.DEBUG.Println("Getting token from:", tokenURL)
 	resp, err := h.client.PostForm(tokenURL, params)
 	if err != nil {
-		return fmt.Errorf("Error posting to token url %s: %s ", tokenURL, err)
+		return fmt.Errorf("error posting to token url %s: %s ", tokenURL, err)
 	}
 	if resp.StatusCode != 200 {
 		body, err := ioutil.ReadAll(resp.Body)
 		resp.Body.Close()
 		if err != nil {
-			return fmt.Errorf("Did not receive token: %v - No body", resp.Status)
+			return fmt.Errorf("did not receive token: %v - No body", resp.Status)
 		}
 		bodyString := string(body)
-		return fmt.Errorf("Did not receive token: %v - %s", resp.Status, bodyString)
+		return fmt.Errorf("did not receive token: %v - %s", resp.Status, bodyString)
 
 	}
 
@@ -219,11 +219,11 @@ func (h *MsalHandler) GetAccessToken() (string, error) {
 func (h *MsalHandler) UpdateFromRedirect(rp *redirect.Params) error {
 
 	if rp.State != h.sessionState {
-		return errors.New("Invalid state in redirect")
+		return errors.New("invalid state in redirect")
 	}
 
 	if rp.Scheme != h.scheme {
-		return errors.New("Invalid scheme in redirect")
+		return errors.New("invalid scheme in redirect")
 	}
 
 	h.mut.Lock()
@@ -240,5 +240,5 @@ func (h *MsalHandler) UpdateFromRedirect(rp *redirect.Params) error {
 func (h *MsalHandler) UpdateFromCode(code string) error {
 	h.mut.Lock()
 	defer h.mut.Unlock()
-	return fmt.Errorf("Not implemented")
+	return fmt.Errorf("not implemented")
 }

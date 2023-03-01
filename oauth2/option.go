@@ -2,7 +2,7 @@ package oauth2
 
 type EmptyOption struct{}
 
-func (EmptyOption) apply(*interface{}) (err error) { return }
+// func (EmptyOption) apply(*interface{}) (err error) { return }
 
 type funcOption struct {
 	f func(interface{}) error

@@ -49,7 +49,7 @@ func WithState(state string) Option {
 		case *MsalHandler:
 			h.sessionState = state
 		default:
-			return fmt.Errorf("Not implemented for this type %v", reflect.TypeOf(h))
+			return fmt.Errorf("nvot implemented for this type %v", reflect.TypeOf(h))
 		}
 
 		return nil
@@ -64,7 +64,7 @@ func WithRenewer(renewer func()) Option {
 		case *MsalHandler:
 			h.renewer = renewer
 		default:
-			return fmt.Errorf("Not implemented for this type %v", reflect.TypeOf(h))
+			return fmt.Errorf("not implemented for this type %v", reflect.TypeOf(h))
 		}
 
 		return nil
@@ -79,7 +79,7 @@ func WithClient(client *http.Client) Option {
 		case *MsalHandler:
 			h.client = client
 		default:
-			return fmt.Errorf("Not implemented for this type %v", reflect.TypeOf(h))
+			return fmt.Errorf("not implemented for this type %v", reflect.TypeOf(h))
 		}
 
 		return nil
@@ -94,7 +94,7 @@ func WithStore(store storage.Storage) Option {
 		case *MsalHandler:
 			h.store = store
 		default:
-			return fmt.Errorf("Not implemented for this type %v", reflect.TypeOf(h))
+			return fmt.Errorf("not implemented for this type %v", reflect.TypeOf(h))
 		}
 
 		return nil
@@ -120,7 +120,7 @@ func WithOauth2Settings(o2o Oauth2Settings) Option {
 				h.o2o.ResourceID = h.o2o.ClientID
 			}
 		default:
-			return fmt.Errorf("Not implemented for this type %v", reflect.TypeOf(h))
+			return fmt.Errorf("not implemented for this type %v", reflect.TypeOf(h))
 		}
 
 		return nil
@@ -141,7 +141,7 @@ func WithLocalhostHttpServer(port uint) Option {
 			h.scheme = "http"
 			s = redirect.Init(port, h.UpdateFromRedirect)
 		default:
-			return fmt.Errorf("Not implemented for this type %v", reflect.TypeOf(h))
+			return fmt.Errorf("not implemented for this type %v", reflect.TypeOf(h))
 		}
 
 		if s != nil {

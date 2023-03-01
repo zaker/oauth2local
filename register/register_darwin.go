@@ -14,5 +14,5 @@ end open location
 
 func RegMe(urlScheme, locauthPath string) error {
 
-	return fmt.Errorf("Not implemented")
+	return fmt.Errorf("not implemented")
 }

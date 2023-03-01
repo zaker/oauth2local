@@ -10,7 +10,7 @@ type Oauth2Settings struct {
 	ResourceID   string
 }
 
-func (o2o Oauth2Settings) Valid() bool {
+func (o2o *Oauth2Settings) Valid() bool {
 
 	if o2o.AuthServer == "" {
 		return false

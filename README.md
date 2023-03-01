@@ -52,7 +52,7 @@ oaut2local token
 
 ### Dependencies
 
-- Go >=v1.11
+- Go >=v1.19
 - Protoc >=v3.7
 
 ### Generate GRPC server/client
