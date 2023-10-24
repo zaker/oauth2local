@@ -13,6 +13,7 @@ import (
 )
 
 type Server struct {
+	pb.UnimplementedLocalAuthServer
 	oauthHandler oauth2.Handler
 }
 

@@ -16,7 +16,7 @@ type Client struct {
 }
 
 func NewClient() (c *Client, err error) {
-	c = new(Client)
+	c = &Client{}
 	c.grpcConn, err = grpc.Dial("pipe", grpc.WithInsecure(), grpc.WithContextDialer(localPipeDial))
 	if err != nil {
 		return nil, err

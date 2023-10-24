@@ -1,6 +1,6 @@
 syntax = "proto3";
 package localauth;
-
+option go_package = "/localauth";
 service LocalAuth {
   rpc Ping(Empty) returns (PingResponse){};
   rpc GetAccessToken(Empty) returns (ATResponse){};

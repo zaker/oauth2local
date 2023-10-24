@@ -58,7 +58,7 @@ oaut2local token
 ### Generate GRPC server/client
 
 ```bash
-protoc -I ipc/localauth/ ipc/localauth/locauth.proto --go_out=plugins=grpc:ipc/localauth
+protoc --go_out=ipc/localauth --go_opt=paths=source_relative --go-grpc_out=ipc/localauth --go-grpc_opt=paths=source_relative .\ipc\locauth.proto
 ```
 
 ### Build
