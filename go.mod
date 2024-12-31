@@ -1,6 +1,6 @@
 module github.com/equinor/oauth2local
 
-go 1.22.0
+go 1.23
 
 toolchain go1.23.4
 
@@ -18,9 +18,8 @@ require (
 	google.golang.org/protobuf v1.36.1
 )
 
-require github.com/fsnotify/fsnotify v1.8.0 // indirect
-
 require (
+	github.com/fsnotify/fsnotify v1.8.0 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/magiconair/properties v1.8.9 // indirect
