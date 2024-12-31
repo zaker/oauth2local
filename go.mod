@@ -2,7 +2,6 @@ module github.com/equinor/oauth2local
 
 go 1.23
 
-toolchain go1.23.4
 
 require (
 	github.com/Microsoft/go-winio v0.6.2
