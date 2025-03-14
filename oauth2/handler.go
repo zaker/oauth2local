@@ -6,10 +6,10 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/equinor/oauth2local/oauth2/redirect"
+	"github.com/zaker/oauth2local/oauth2/redirect"
 
-	"github.com/equinor/oauth2local/storage"
 	"github.com/google/uuid"
+	"github.com/zaker/oauth2local/storage"
 )
 
 type Handler interface {

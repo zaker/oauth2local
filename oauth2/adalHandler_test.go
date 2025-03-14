@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/equinor/oauth2local/oauth2/redirect"
-	"github.com/equinor/oauth2local/storage"
+	"github.com/zaker/oauth2local/oauth2/redirect"
+	"github.com/zaker/oauth2local/storage"
 )
 
 var testSettings = Oauth2Settings{

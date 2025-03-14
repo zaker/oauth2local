@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	pb "github.com/equinor/oauth2local/ipc/localauth"
 	jww "github.com/spf13/jwalterweatherman"
+	pb "github.com/zaker/oauth2local/ipc/localauth"
 	"google.golang.org/grpc"
 )
 

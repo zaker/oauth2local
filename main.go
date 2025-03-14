@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/equinor/oauth2local/cmd"
+	"github.com/zaker/oauth2local/cmd"
 )
 
 func main() {

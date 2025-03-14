@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"net/url"
 
-	pb "github.com/equinor/oauth2local/ipc/localauth"
-	"github.com/equinor/oauth2local/oauth2"
-	"github.com/equinor/oauth2local/oauth2/redirect"
 	jww "github.com/spf13/jwalterweatherman"
+	pb "github.com/zaker/oauth2local/ipc/localauth"
+	"github.com/zaker/oauth2local/oauth2"
+	"github.com/zaker/oauth2local/oauth2/redirect"
 	"google.golang.org/grpc"
 )
 

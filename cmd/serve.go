@@ -6,12 +6,12 @@ import (
 
 	"github.com/pkg/browser"
 
-	"github.com/equinor/oauth2local/config"
-	"github.com/equinor/oauth2local/ipc"
-	"github.com/equinor/oauth2local/oauth2"
 	"github.com/spf13/cobra"
 	jww "github.com/spf13/jwalterweatherman"
 	"github.com/spf13/viper"
+	"github.com/zaker/oauth2local/config"
+	"github.com/zaker/oauth2local/ipc"
+	"github.com/zaker/oauth2local/oauth2"
 )
 
 // serveCmd represents the serve command

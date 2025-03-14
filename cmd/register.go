@@ -3,10 +3,10 @@ package cmd
 import (
 	"os"
 
-	"github.com/equinor/oauth2local/config"
-	"github.com/equinor/oauth2local/register"
 	"github.com/spf13/cobra"
 	jww "github.com/spf13/jwalterweatherman"
+	"github.com/zaker/oauth2local/config"
+	"github.com/zaker/oauth2local/register"
 )
 
 // registerCmd represents the register command

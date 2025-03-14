@@ -3,7 +3,7 @@ package cmd
 import (
 	"os"
 
-	"github.com/equinor/oauth2local/config"
+	"github.com/zaker/oauth2local/config"
 
 	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"

@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/equinor/oauth2local/ipc"
 	"github.com/spf13/cobra"
 	jww "github.com/spf13/jwalterweatherman"
+	"github.com/zaker/oauth2local/ipc"
 )
 
 var breakB bool

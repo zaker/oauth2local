@@ -10,10 +10,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/equinor/oauth2local/oauth2/redirect"
-	"github.com/equinor/oauth2local/storage"
 	jwt "github.com/golang-jwt/jwt"
 	jww "github.com/spf13/jwalterweatherman"
+	"github.com/zaker/oauth2local/oauth2/redirect"
+	"github.com/zaker/oauth2local/storage"
 )
 
 type MsalHandler struct {
