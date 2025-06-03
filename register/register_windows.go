@@ -3,7 +3,6 @@ package register
 import (
 	"log/slog"
 
-	jww "github.com/spf13/jwalterweatherman"
 	"golang.org/x/sys/windows/registry"
 )
 
@@ -35,7 +34,7 @@ func RegMe(urlScheme, locauthPath string) error {
 		return err
 	}
 	if registered {
-		jww.INFO.Printf("App %s is registered as url handler for %s ", locauthPath, urlScheme)
+		slog.Info("app  is registered as url handler for", "app name", locauthPath, "url scheme", urlScheme)
 		return nil
 	}
 	slog.Info("Creating key " + urlScheme)
@@ -55,21 +54,21 @@ func RegMe(urlScheme, locauthPath string) error {
 		return err
 	}
 
-	slog.Info("Creating key", urlScheme+`\shell`)
+	slog.Info("Creating key", "keyname", urlScheme+`\shell`)
 	sk, _, err := registry.CreateKey(registry.CLASSES_ROOT, urlScheme+`\shell`, registry.WRITE)
 	if err != nil {
 		return err
 	}
 	defer sk.Close()
 
-	slog.Info("Creating key", urlScheme+`\shell\open`)
+	slog.Info("Creating key", "keyname", urlScheme+`\shell\open`)
 	ok, _, err := registry.CreateKey(registry.CLASSES_ROOT, urlScheme+`\shell\open`, registry.WRITE)
 	if err != nil {
 		return err
 	}
 	ok.Close()
 
-	slog.Info("Creating key", urlScheme+`\shell\open\command`)
+	slog.Info("Creating key", "keyname", urlScheme+`\shell\open\command`)
 	ck, _, err := registry.CreateKey(registry.CLASSES_ROOT, urlScheme+`\shell\open\command`, registry.WRITE)
 	if err != nil {
 		return err

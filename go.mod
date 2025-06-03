@@ -11,12 +11,12 @@ require (
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c
 	github.com/spf13/cobra v1.9.1
-
 	github.com/spf13/viper v1.20.1
 	golang.org/x/sys v0.33.0
 	google.golang.org/grpc v1.72.2
 	google.golang.org/protobuf v1.36.6
 )
+
 
 require (
 	github.com/fsnotify/fsnotify v1.9.0 // indirect

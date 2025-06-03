@@ -4,7 +4,7 @@ import (
 	"fmt"
 )
 
-var regMacScript = `
+var _ = `
 on open location myUrl
 
 	do shell script "oauth2local callback " & "\"" & myUrl & "\""
