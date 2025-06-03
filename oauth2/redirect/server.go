@@ -28,11 +28,11 @@ func (s *Server) Serve() {
 
 func (s *Server) callbackFunc(w http.ResponseWriter, r *http.Request) {
 
-	slog.Debug("Received callback", *r.URL)
+	slog.Debug("Received callback", "url", r.URL.String())
 	redirect := DecodeRedirect(r.URL)
 	err := s.redirectHandler(redirect)
 	if err != nil {
-		slog.Error("Failed callback", err)
+		slog.Error("Failed callback", "callback error", err)
 		fmt.Fprintf(w, "Error handling callback %q", html.EscapeString(r.URL.Path))
 		return
 	}
