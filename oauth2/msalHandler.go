@@ -10,7 +10,7 @@ import (
 	"sync"
 	"time"
 
-	jwt "github.com/golang-jwt/jwt"
+	jwt "github.com/golang-jwt/jwt/v5"
 	jww "github.com/spf13/jwalterweatherman"
 	"github.com/zaker/oauth2local/oauth2/redirect"
 	"github.com/zaker/oauth2local/storage"
