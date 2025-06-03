@@ -5,13 +5,13 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"log/slog"
 	"net/http"
 	"net/url"
 	"sync"
 	"time"
 
 	jwt "github.com/golang-jwt/jwt/v5"
-	jww "github.com/spf13/jwalterweatherman"
 	"github.com/zaker/oauth2local/oauth2/redirect"
 	"github.com/zaker/oauth2local/storage"
 )
@@ -34,7 +34,7 @@ func (h *MsalHandler) defaultRenewer() {
 	for range h.ticker.C {
 		err := h.renewTokens()
 		if err != nil {
-			jww.INFO.Println("Couldn't renew token", err)
+			slog.Warn("Couldn't renew token", "error", err)
 		}
 	}
 }
@@ -81,27 +81,27 @@ func (h *MsalHandler) renewTokens() error {
 		return err
 	}
 
-	token, _, err := h.jwtParser.ParseUnverified(a, &jwt.StandardClaims{})
+	token, _, err := h.jwtParser.ParseUnverified(a, &jwt.RegisteredClaims{})
 	if err != nil {
 		return err
 	}
-	if claims, ok := token.Claims.(*jwt.StandardClaims); ok {
+	if claims, ok := token.Claims.(*jwt.RegisteredClaims); ok {
 
-		tokenPeriod := claims.ExpiresAt - claims.IssuedAt
-		currentPeriod := claims.ExpiresAt - time.Now().Unix()
+		tokenPeriod := claims.ExpiresAt.Sub(claims.IssuedAt.Time)
+		currentPeriod := time.Until(claims.ExpiresAt.Time)
 
 		if currentPeriod > tokenPeriod/5 {
-			jww.INFO.Println("Token still in grace period")
+			slog.Info("Token still in grace period")
 			return nil
 		}
-		jww.INFO.Println("Token is out grace period")
+		slog.Info("Token is out grace period")
 	}
-	jww.DEBUG.Println("Fetching refresh token from store")
+	slog.Debug("Fetching refresh token from store")
 	r, err := h.store.GetToken(storage.RefreshToken)
 	if err != nil {
 		return err
 	}
-	jww.DEBUG.Println("Updating refresh grant in store")
+	slog.Debug("Updating refresh grant in store")
 	err = h.updateTokens(r, refreshGrant)
 	if err != nil {
 		return err
@@ -126,7 +126,7 @@ func (h *MsalHandler) LoginProviderURL() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	jww.DEBUG.Println("LoginProvider at:", u)
+	slog.Debug("LoginProvider at:", "url", u)
 	params := u.Query()
 
 	params.Set("redirect_uri", h.redirectURL)
@@ -157,7 +157,7 @@ func (h *MsalHandler) updateTokens(code, grant string) error {
 	params.Set("resource", h.o2o.ResourceID)
 
 	tokenURL := h.tokenURL()
-	jww.DEBUG.Println("Getting token from:", tokenURL)
+	slog.Debug("get token from:", "token url", tokenURL)
 	resp, err := h.client.PostForm(tokenURL, params)
 	if err != nil {
 		return fmt.Errorf("error posting to token url %s: %s ", tokenURL, err)

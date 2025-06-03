@@ -3,9 +3,9 @@ package ipc
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"time"
 
-	jww "github.com/spf13/jwalterweatherman"
 	pb "github.com/zaker/oauth2local/ipc/localauth"
 	"google.golang.org/grpc"
 )
@@ -53,9 +53,9 @@ func (c *Client) SendCallback(callbackURL string) error {
 		return err
 	}
 	if r == nil {
-		return fmt.Errorf("No message received")
+		return fmt.Errorf("no message received")
 	}
-	jww.DEBUG.Println("Sent callback:", callbackURL)
+	slog.Debug("Sent callback:", "callbackURL", callbackURL)
 	return nil
 }
 
@@ -68,6 +68,6 @@ func (c *Client) GetAccessToken() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	jww.DEBUG.Println("Got access token")
+	slog.Debug("Got access token")
 	return r.AccessToken, nil
 }

@@ -2,12 +2,12 @@ package cmd
 
 import (
 	"fmt"
+	"log/slog"
 	"os"
 
 	"github.com/pkg/browser"
 
 	"github.com/spf13/cobra"
-	jww "github.com/spf13/jwalterweatherman"
 	"github.com/spf13/viper"
 	"github.com/zaker/oauth2local/config"
 	"github.com/zaker/oauth2local/ipc"
@@ -25,12 +25,12 @@ var serveCmd = &cobra.Command{
 func runServe(cmd *cobra.Command, args []string) {
 
 	if viper.ConfigFileUsed() == "" {
-		jww.ERROR.Println("No config file loaded")
+		slog.Error("No config file loaded")
 		os.Exit(1)
 	}
 
 	if ipc.HasSovereign() {
-		jww.INFO.Println("A server is already running")
+		slog.Info("A server is already running")
 		os.Exit(9)
 	}
 
@@ -48,7 +48,7 @@ func runServe(cmd *cobra.Command, args []string) {
 
 	var port = config.LocalHttpServerPort()
 	if port > 0 && port < 65536 {
-		jww.DEBUG.Println("Using local http server to receive callback")
+		slog.Debug("Using local http server to receive callback")
 		opts = append(opts, oauth2.WithLocalhostHttpServer(port))
 
 	}
@@ -60,32 +60,32 @@ func runServe(cmd *cobra.Command, args []string) {
 	case "msal":
 		oauthHandler, err = oauth2.NewAdal(opts...)
 	default:
-		err = fmt.Errorf("No authserver selected")
+		err = fmt.Errorf("no authserver selected")
 	}
 
 	if err != nil {
-		jww.ERROR.Printf("Error with oauth client: %v", err)
+		slog.Error("error with oauth client: %v", "inner", err)
 		os.Exit(1)
 	}
 
-	jww.INFO.Println("starting browser...")
+	slog.Info("starting browser...")
 
 	lpu, err := oauthHandler.LoginProviderURL()
 	if err != nil {
-		jww.ERROR.Printf("Login provider url isn't an url: %v", err)
+		slog.Error("login provider url isn't an url", "error", err)
 		os.Exit(1)
 	}
 
 	if !testing {
 		err = browser.OpenURL(lpu)
 		if err != nil {
-			jww.ERROR.Println(err)
+			slog.Error("error", "inner", err)
 			os.Exit(1)
 		}
 	}
 	s := ipc.NewServer(oauthHandler)
 
-	jww.ERROR.Println("Cannot serve:", s.Serve())
+	slog.Error("Cannot serve", "serverUrl", s.Serve())
 	os.Exit(1)
 }
 

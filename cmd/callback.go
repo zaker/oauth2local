@@ -3,10 +3,11 @@ package cmd
 import (
 	"bufio"
 	"fmt"
+	"log/slog"
 	"os"
+	"strings"
 
 	"github.com/spf13/cobra"
-	jww "github.com/spf13/jwalterweatherman"
 	"github.com/zaker/oauth2local/ipc"
 )
 
@@ -21,12 +22,12 @@ var callbackCmd = &cobra.Command{
 		err := sendCallback(args)
 		if err != nil {
 
-			jww.ERROR.Println("Error...", err)
+			slog.Error("send callback", "error", err.Error())
 			_, _ = bufio.NewReader(os.Stdin).ReadBytes('\n')
 			return
 		}
 		if breakB {
-			jww.INFO.Println("sent calback", args)
+			slog.Info("sent calback %v", "Args", strings.Join(args, ","))
 			_, _ = bufio.NewReader(os.Stdin).ReadBytes('\n')
 		}
 	},
@@ -39,7 +40,7 @@ func sendCallback(args []string) error {
 	}
 
 	if len(args) != 1 {
-		return fmt.Errorf("Only one arg supported")
+		return fmt.Errorf("only one arg supported")
 	}
 
 	err = cli.SendCallback(args[0])

@@ -3,7 +3,8 @@ package oauth2
 import (
 	"bytes"
 	"encoding/json"
-	"io/ioutil"
+	"io"
+
 	"net/http"
 	"testing"
 
@@ -66,7 +67,7 @@ func TestAdalHandler_UpdateFromRedirect(t *testing.T) {
 		return &http.Response{
 			StatusCode: 200,
 			// Send response to be tested
-			Body: ioutil.NopCloser(bytes.NewBuffer(b)),
+			Body: io.NopCloser(bytes.NewBuffer(b)),
 			// Must be set to non-nil value or it panics
 			Header: make(http.Header),
 		}

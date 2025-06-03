@@ -1,8 +1,9 @@
 package cmd
 
 import (
+	"log/slog"
+
 	"github.com/spf13/cobra"
-	jww "github.com/spf13/jwalterweatherman"
 	"github.com/spf13/viper"
 )
 
@@ -17,7 +18,7 @@ var defaultsCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		err := viper.WriteConfig()
 		if err != nil {
-			jww.ERROR.Println(err)
+			slog.Error("write config", "err", err)
 		}
 	},
 }

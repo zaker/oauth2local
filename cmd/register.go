@@ -1,10 +1,10 @@
 package cmd
 
 import (
+	"log/slog"
 	"os"
 
 	"github.com/spf13/cobra"
-	jww "github.com/spf13/jwalterweatherman"
 	"github.com/zaker/oauth2local/config"
 	"github.com/zaker/oauth2local/register"
 )
@@ -17,7 +17,7 @@ var registerCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		err := register.RegMe(config.CustomScheme(), os.Args[0])
 		if err != nil {
-			jww.ERROR.Println(err)
+			slog.Error("error", "inner", err)
 		}
 	},
 }

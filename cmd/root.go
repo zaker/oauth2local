@@ -1,13 +1,14 @@
 package cmd
 
 import (
+	"log/slog"
 	"os"
 
 	"github.com/zaker/oauth2local/config"
 
 	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
-	jww "github.com/spf13/jwalterweatherman"
+
 	"github.com/spf13/viper"
 )
 
@@ -22,7 +23,7 @@ var rootCmd = &cobra.Command{
 
 func Execute() {
 	if err := rootCmd.Execute(); err != nil {
-		jww.ERROR.Println(err)
+		slog.Error("error", "inner", err)
 		os.Exit(1)
 	}
 }
@@ -41,7 +42,7 @@ func initConfig() {
 	} else {
 		home, err := homedir.Dir()
 		if err != nil {
-			jww.ERROR.Println(err)
+			slog.Error("error", "inner", err)
 			os.Exit(1)
 		}
 
@@ -50,16 +51,16 @@ func initConfig() {
 	}
 
 	if verbose {
-		jww.SetLogThreshold(jww.LevelTrace)
-		jww.SetStdoutThreshold(jww.LevelTrace)
+		slog.SetLogLoggerLevel(slog.LevelDebug)
+
 	}
-	jww.INFO.Println("Using config file:", viper.ConfigFileUsed())
+	slog.Info("using config file", "filename", viper.ConfigFileUsed())
 
 	config.SetDefaults()
 	viper.AutomaticEnv()
 
 	if err := viper.ReadInConfig(); err != nil {
-		jww.INFO.Println(err)
+		slog.Error("error", "inner", err)
 	}
 
 }

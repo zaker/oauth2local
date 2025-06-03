@@ -4,9 +4,8 @@ import (
 	"fmt"
 	"html"
 	"log"
+	"log/slog"
 	"net/http"
-
-	jww "github.com/spf13/jwalterweatherman"
 )
 
 type Server struct {
@@ -29,11 +28,11 @@ func (s *Server) Serve() {
 
 func (s *Server) callbackFunc(w http.ResponseWriter, r *http.Request) {
 
-	jww.DEBUG.Println("Received callback", *r.URL)
+	slog.Debug("Received callback", *r.URL)
 	redirect := DecodeRedirect(r.URL)
 	err := s.redirectHandler(redirect)
 	if err != nil {
-		jww.ERROR.Println("Failed callback", err)
+		slog.Error("Failed callback", err)
 		fmt.Fprintf(w, "Error handling callback %q", html.EscapeString(r.URL.Path))
 		return
 	}

@@ -2,11 +2,11 @@ package cmd
 
 import (
 	"fmt"
+	"log/slog"
 	"os"
 	"strings"
 
 	"github.com/spf13/cobra"
-	jww "github.com/spf13/jwalterweatherman"
 	"github.com/zaker/oauth2local/ipc"
 )
 
@@ -18,13 +18,13 @@ var tokenCmd = &cobra.Command{
 
 		cli, err := ipc.NewClient()
 		if err != nil {
-			jww.ERROR.Println(err)
+			slog.Error("error", "inner", err)
 			os.Exit(1)
 		}
 
 		a, err := cli.GetAccessToken()
 		if err != nil {
-			jww.ERROR.Println(err)
+			slog.Error("error", "inner", err)
 
 			s := err.Error()
 

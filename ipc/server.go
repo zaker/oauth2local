@@ -3,9 +3,9 @@ package ipc
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"net/url"
 
-	jww "github.com/spf13/jwalterweatherman"
 	pb "github.com/zaker/oauth2local/ipc/localauth"
 	"github.com/zaker/oauth2local/oauth2"
 	"github.com/zaker/oauth2local/oauth2/redirect"
@@ -22,28 +22,28 @@ func NewServer(oauthHandler oauth2.Handler) (s *Server) {
 }
 
 func (s *Server) GetAccessToken(ctx context.Context, _ *pb.Empty) (*pb.ATResponse, error) {
-	jww.DEBUG.Println("Get access token")
+	slog.Debug("Get access token")
 	a, err := s.oauthHandler.GetAccessToken()
 	if err != nil {
-		jww.ERROR.Println("Error:", err)
+		slog.Error("error:", "inner", err)
 		return nil, err
 	}
 	return &pb.ATResponse{AccessToken: a}, nil
 }
 
 func (s *Server) Callback(ctx context.Context, cb *pb.CBRequest) (*pb.Empty, error) {
-	jww.DEBUG.Println("Callback from provider: ", cb.Url)
+	slog.Debug("Callback from provider: ", "callback url", cb.Url)
 	rURL, err := url.Parse(cb.Url)
 	if err != nil {
-		jww.ERROR.Println("Callback error:", err)
+		slog.Error("Callback error:", "callback error", err)
 		return nil, err
 	}
 	err = s.oauthHandler.UpdateFromRedirect(redirect.DecodeRedirect(rURL))
 	if err != nil {
-		jww.ERROR.Println("Callback error:", err)
+		slog.Error("callback error:", "callback error", err)
 		return nil, err
 	}
-	jww.INFO.Println("Auth ok")
+	slog.Info("Auth ok")
 	return &pb.Empty{}, nil
 }
 
