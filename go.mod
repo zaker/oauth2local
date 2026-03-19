@@ -12,9 +12,9 @@ require (
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c
 	github.com/spf13/cobra v1.9.1
 	github.com/spf13/viper v1.20.1
-	golang.org/x/sys v0.34.0
-	google.golang.org/grpc v1.73.0
-	google.golang.org/protobuf v1.36.6
+	golang.org/x/sys v0.39.0
+	google.golang.org/grpc v1.79.3
+	google.golang.org/protobuf v1.36.10
 )
 
 require (
@@ -29,8 +29,8 @@ require (
 	github.com/spf13/pflag v1.0.7 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
-	golang.org/x/net v0.42.0 // indirect
-	golang.org/x/text v0.27.0 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20250721164621-a45f3dfb1074 // indirect
+	golang.org/x/net v0.48.0 // indirect
+	golang.org/x/text v0.32.0 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20251202230838-ff82c1b0f217 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
